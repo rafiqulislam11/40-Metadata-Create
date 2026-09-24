@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PixcraftAI - Adobe Stock & Microstock Batch SEO Metadata Generator</title>
-  <meta name="description" content="Commercial microstock batch SEO metadata generator for Adobe Stock, Shutterstock, Freepik, and Vecteezy. Generates optimized titles, descriptions, and ranked keywords with top 10 weighting.">
-  
+  <title>PixCraftAI – Stock Photo SEO Metadata & Keyword Generator</title>
+  <meta name="description" content="Official PixCraftAI style commercial stock photo metadata generator. Batch generate titles, descriptions, and top 10 weighted ranked keywords for Adobe Stock, Shutterstock, Freepik, and Vecteezy.">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -13,12 +13,15 @@
   <!-- JSZip & FileSaver -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -27,197 +30,341 @@
           },
           colors: {
             brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
+              50: '#f0f5ff',
+              100: '#e5edff',
               500: '#3b82f6',
               600: '#2563eb',
               700: '#1d4ed8',
-              900: '#1e3a8a',
+              900: '#0f172a',
+            },
+            dark: {
+              bg: '#080c14',
+              card: '#0f172a',
+              cardHover: '#1e293b',
+              border: '#1e293b',
+              borderSubtle: '#334155',
             }
           }
         }
       }
     }
   </script>
+
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: #f8fafc;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 999px;
+      background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
+      background: rgba(148, 163, 184, 0.25);
       border-radius: 999px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+      background: rgba(148, 163, 184, 0.45);
     }
-    .platform-icon-btn {
+    .platform-btn {
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .platform-icon-btn:hover {
+    .platform-btn:hover {
       transform: translateY(-2px);
     }
-    .platform-icon-btn.active {
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.45);
-      border-color: #2563eb !important;
+    .platform-btn.active {
+      box-shadow: 0 0 0 2px #3b82f6, 0 10px 20px -5px rgba(59, 130, 246, 0.4);
+      border-color: #3b82f6 !important;
     }
     @keyframes spin-fast {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
     .spin-fast {
-      animation: spin-fast 0.75s linear infinite;
+      animation: spin-fast 0.8s linear infinite;
     }
-    .drag-active {
-      border-color: #2563eb !important;
-      background-color: #eff6ff !important;
-      transform: scale(1.005);
+    .dropzone-active {
+      border-color: #3b82f6 !important;
+      background-color: rgba(59, 130, 246, 0.08) !important;
+      transform: scale(1.008);
+    }
+    .glass-panel {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
   </style>
 </head>
-<body class="min-h-screen text-slate-800 flex flex-col justify-between selection:bg-blue-100 selection:text-blue-700">
+<body class="min-h-screen bg-[#080c14] text-slate-100 flex flex-col justify-between selection:bg-blue-600 selection:text-white">
 
-  <!-- Main Sticky Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 sm:px-8 py-3 flex items-center justify-between shadow-xs">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25">
-        <i data-lucide="sparkles" class="w-5 h-5"></i>
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-xl font-black text-slate-900 tracking-tight">Pixcraft<span class="text-blue-600">AI</span></h1>
-          <span id="aiOnlineBadge" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">Engine Ready</span>
+  <!-- Top Sticky Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-[#080c14]/90 glass-panel border-b border-slate-800/80 px-4 sm:px-8 py-3 transition-colors">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-1 ring-white/20">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
         </div>
-        <p class="text-[10px] text-slate-400 font-medium hidden sm:block">Adobe Stock SEO & Microstock Batch Generator</p>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-black tracking-tight text-white">PixCraft<span class="text-blue-500">AI</span></span>
+            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Pro 3.0</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-medium hidden sm:block">Microstock Batch SEO & Metadata Suite</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Right Header Actions -->
-    <div class="flex items-center gap-2 sm:gap-3">
-      <!-- Export Dropdown -->
-      <div class="relative group">
-        <button id="headerExportBtn" class="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm">
-          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-          <span>Export CSV</span>
-          <i data-lucide="chevron-down" class="w-3 h-3 opacity-80"></i>
+      <!-- Action Buttons & Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Settings/Config Toggle Button -->
+        <button onclick="toggleAdvancedSettings()" id="advancedSettingsToggleBtn" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-blue-400"></i>
+          <span class="hidden md:inline">SEO Config</span>
         </button>
-        <div class="hidden group-hover:block absolute right-0 top-full pt-1.5 z-50 w-56">
-          <div class="bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 text-xs">
-            <button onclick="downloadAdobeStockCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-semibold">
-              <span class="w-2 h-2 rounded-full bg-rose-500"></span> Adobe Stock CSV
-            </button>
-            <button onclick="downloadShutterstockCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-semibold">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span> Shutterstock CSV
-            </button>
-            <button onclick="downloadUniversalCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-semibold">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Universal Microstock CSV
-            </button>
-            <div class="border-t border-slate-100 my-1"></div>
-            <button onclick="copyAllCsvToClipboard()" class="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-semibold">
-              <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-400"></i> Copy All Rows to Clipboard
-            </button>
+
+        <!-- Bulk Actions Button -->
+        <button onclick="openBulkToolsModal()" id="bulkToolsBtn" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span class="hidden sm:inline">Bulk Tools</span>
+        </button>
+
+        <!-- Export Dropdown -->
+        <div class="relative group">
+          <button id="headerExportBtn" class="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition shadow-md shadow-emerald-900/30">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+            <span>Export CSV</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 opacity-80"></i>
+          </button>
+          <div class="hidden group-hover:block absolute right-0 top-full pt-1.5 z-50 w-60">
+            <div class="bg-slate-900/95 glass-panel rounded-2xl shadow-2xl border border-slate-800 py-1.5 text-xs">
+              <button onclick="downloadAdobeStockCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 flex items-center justify-between text-slate-200 font-semibold transition">
+                <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Adobe Stock CSV</span>
+                <span class="text-[10px] text-slate-400">Official</span>
+              </button>
+              <button onclick="downloadShutterstockCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 flex items-center justify-between text-slate-200 font-semibold transition">
+                <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Shutterstock CSV</span>
+                <span class="text-[10px] text-slate-400">Categories</span>
+              </button>
+              <button onclick="downloadFreepikCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 flex items-center justify-between text-slate-200 font-semibold transition">
+                <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Freepik CSV</span>
+                <span class="text-[10px] text-slate-400">Tags only</span>
+              </button>
+              <button onclick="downloadVecteezyCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 flex items-center justify-between text-slate-200 font-semibold transition">
+                <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Vecteezy CSV</span>
+                <span class="text-[10px] text-slate-400">Vectors</span>
+              </button>
+              <button onclick="downloadUniversalCsv()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 flex items-center justify-between text-slate-200 font-semibold transition">
+                <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Universal Stock CSV</span>
+                <span class="text-[10px] text-slate-400">All Fields</span>
+              </button>
+              <div class="border-t border-slate-800 my-1"></div>
+              <button onclick="copyAllCsvToClipboard()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 flex items-center gap-2 text-slate-300 font-semibold transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5 text-blue-400"></i> Copy All Rows to Clipboard
+              </button>
+              <button onclick="downloadProjectZip()" class="w-full text-left px-3.5 py-2 hover:bg-slate-800 flex items-center gap-2 text-slate-300 font-semibold transition">
+                <i data-lucide="archive" class="w-3.5 h-3.5 text-emerald-400"></i> Full Project ZIP Bundle
+              </button>
+            </div>
           </div>
         </div>
+
+        <!-- AI Engine Mode & Key Button -->
+        <button onclick="openApiModal()" id="apiKeyBadgeBtn" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition">
+          <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span id="keyLabelBadge" class="hidden sm:inline">AI Mode: Fast Built-in</span>
+        </button>
+
+        <!-- Theme Toggle (Dark/Light) -->
+        <button onclick="toggleTheme()" id="themeToggleBtn" title="Toggle Theme" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition">
+          <i data-lucide="sun" id="themeSunIcon" class="w-4 h-4 hidden"></i>
+          <i data-lucide="moon" id="themeMoonIcon" class="w-4 h-4 text-blue-400"></i>
+        </button>
       </div>
 
-      <button onclick="downloadProjectZip()" title="Download Full Project ZIP" class="hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-        <i data-lucide="archive" class="w-3.5 h-3.5 text-blue-600"></i>
-        <span>ZIP Project</span>
-      </button>
-
-      <button onclick="openApiModal()" id="apiKeyBadgeBtn" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-white text-slate-700 transition shadow-2xs">
-        <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i>
-        <span id="keyLabelBadge">AI Mode: Fast Built-in</span>
-      </button>
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-1">
-    
-    <!-- Platform Row Section -->
-    <section class="mb-6 text-center">
-      <h2 class="text-xs font-extrabold tracking-widest text-slate-500 uppercase mb-3">SELECT TARGET STOCK MARKETPLACE</h2>
-      
-      <div class="flex items-center justify-center flex-wrap gap-2.5 sm:gap-3" id="platformSelector">
+  <!-- Main Content Wrapper -->
+  <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-1 space-y-6">
+
+    <!-- Platform Selector Bar (PixCraftAI Multi-Agency Standard) -->
+    <section class="bg-slate-900/60 glass-panel border border-slate-800 rounded-3xl p-4 sm:p-5">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="target" class="w-3.5 h-3.5 text-blue-500"></i> TARGET STOCK MARKETPLACE ENGINE
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="platformConstraintNotice" class="text-[11px] font-semibold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
+            Adobe Stock: 55-75 chars • First 10 Tags 80% Weight
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-2 sm:gap-2.5" id="platformSelectorGrid">
+        
         <!-- Adobe Stock (Default) -->
-        <button onclick="selectPlatform('Adobe Stock', this)" class="platform-icon-btn active flex items-center justify-center w-12 h-12 rounded-xl bg-black text-white border-2 border-transparent shadow-xs" title="Adobe Stock (Top Priority: 80% Weight on Top 10 Tags)">
-          <svg class="w-6 h-6 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button onclick="selectPlatform('Adobe Stock', this)" class="platform-btn active flex flex-col items-center justify-center p-3 rounded-2xl bg-black border border-slate-800 text-white group" title="Adobe Stock (Top Priority: 80% Ranking Weight on Top 10 Keywords)">
+          <svg class="w-5 h-5 text-rose-500 mb-1 group-hover:scale-110 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
           </svg>
+          <span class="text-[11px] font-extrabold">Adobe Stock</span>
         </button>
 
         <!-- Shutterstock -->
-        <button onclick="selectPlatform('Shutterstock', this)" class="platform-icon-btn flex items-center justify-center w-12 h-12 rounded-xl bg-[#1e293b] text-white border-2 border-transparent shadow-xs" title="Shutterstock (Descriptive full captions)">
-          <span class="text-sm font-black tracking-tighter">St</span>
+        <button onclick="selectPlatform('Shutterstock', this)" class="platform-btn flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white group" title="Shutterstock (Descriptive full captions & 50 tags)">
+          <span class="text-sm font-black text-rose-400 mb-0.5 tracking-tighter">St</span>
+          <span class="text-[11px] font-bold text-slate-300">Shutterstock</span>
         </button>
 
         <!-- Freepik -->
-        <button onclick="selectPlatform('Freepik', this)" class="platform-icon-btn flex items-center justify-center w-12 h-12 rounded-xl bg-[#0f172a] text-white border-2 border-transparent shadow-xs" title="Freepik (Clean design & template keywords)">
-          <i data-lucide="crop" class="w-5 h-5 text-blue-400"></i>
+        <button onclick="selectPlatform('Freepik', this)" class="platform-btn flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white group" title="Freepik (Clean graphic tags & design utility)">
+          <i data-lucide="crop" class="w-4 h-4 text-blue-400 mb-1 group-hover:scale-110 transition"></i>
+          <span class="text-[11px] font-bold text-slate-300">Freepik</span>
         </button>
 
         <!-- Vecteezy -->
-        <button onclick="selectPlatform('Vecteezy', this)" class="platform-icon-btn flex items-center justify-center w-12 h-12 rounded-xl bg-[#334155] text-white border-2 border-transparent shadow-xs" title="Vecteezy">
-          <span class="text-base font-black text-amber-400">V</span>
+        <button onclick="selectPlatform('Vecteezy', this)" class="platform-btn flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white group" title="Vecteezy (Vector / banner / template tags)">
+          <span class="text-sm font-black text-amber-400 mb-0.5">V</span>
+          <span class="text-[11px] font-bold text-slate-300">Vecteezy</span>
         </button>
 
         <!-- Depositphotos -->
-        <button onclick="selectPlatform('Depositphotos', this)" class="platform-icon-btn flex items-center justify-center w-12 h-12 rounded-xl bg-[#0f172a] text-white border-2 border-transparent shadow-xs" title="Depositphotos">
-          <i data-lucide="camera" class="w-5 h-5 text-emerald-400"></i>
+        <button onclick="selectPlatform('Depositphotos', this)" class="platform-btn flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white group" title="Depositphotos">
+          <i data-lucide="camera" class="w-4 h-4 text-emerald-400 mb-1 group-hover:scale-110 transition"></i>
+          <span class="text-[11px] font-bold text-slate-300">Depositphotos</span>
         </button>
 
         <!-- 123RF -->
-        <button onclick="selectPlatform('123RF', this)" class="platform-icon-btn flex items-center justify-center w-12 h-12 rounded-xl bg-[#0f172a] text-white border-2 border-transparent shadow-xs" title="123RF">
-          <span class="text-[11px] font-black tracking-tight text-slate-100">123RF</span>
+        <button onclick="selectPlatform('123RF', this)" class="platform-btn flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white group" title="123RF">
+          <span class="text-[11px] font-black text-sky-400 mb-0.5">123RF</span>
+          <span class="text-[11px] font-bold text-slate-300">123RF</span>
         </button>
 
         <!-- Dreamstime -->
-        <button onclick="selectPlatform('Dreamstime', this)" class="platform-icon-btn flex items-center justify-center w-12 h-12 rounded-xl bg-[#0f172a] text-white border-2 border-transparent shadow-xs" title="Dreamstime">
-          <i data-lucide="disc-3" class="w-5 h-5 text-pink-400"></i>
+        <button onclick="selectPlatform('Dreamstime', this)" class="platform-btn flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white group" title="Dreamstime">
+          <i data-lucide="disc-3" class="w-4 h-4 text-pink-400 mb-1 group-hover:scale-110 transition"></i>
+          <span class="text-[11px] font-bold text-slate-300">Dreamstime</span>
         </button>
-      </div>
 
-      <!-- SEO Notice Banner -->
-      <div id="seoNoticeBadge" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200/80">
-        <i data-lucide="zap" class="w-3.5 h-3.5 text-blue-600"></i>
-        <span>Adobe Stock Engine Active: First 10 Keywords Carry 80% Search Weight • 48 Ranked Tags</span>
+        <!-- Alamy / Getty -->
+        <button onclick="selectPlatform('Alamy', this)" class="platform-btn flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white group" title="Alamy / Editorial / Getty">
+          <i data-lucide="globe" class="w-4 h-4 text-violet-400 mb-1 group-hover:scale-110 transition"></i>
+          <span class="text-[11px] font-bold text-slate-300">Alamy</span>
+        </button>
+
       </div>
     </section>
 
-    <!-- Upload Drop Zone -->
+    <!-- Collapsible Advanced SEO Config Panel -->
+    <section id="advancedSettingsPanel" class="hidden bg-slate-900/60 glass-panel border border-slate-800 rounded-3xl p-5 transition-all">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+        <h3 class="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-blue-400"></i> Generation Parameters & Preferences
+        </h3>
+        <button onclick="toggleAdvancedSettings()" class="text-slate-400 hover:text-white text-xs">Close</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+        
+        <!-- Keyword Target Count -->
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1.5">Target Keyword Count</label>
+          <select id="configKeywordCount" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 outline-none focus:border-blue-500">
+            <option value="48" selected>48 Keywords (Optimal Adobe Stock)</option>
+            <option value="40">40 Keywords</option>
+            <option value="35">35 Keywords (Clean Minimal)</option>
+            <option value="25">25 Keywords (Fast Review)</option>
+          </select>
+        </div>
+
+        <!-- Keyword Style -->
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1.5">Keyword Phrasing Style</label>
+          <select id="configKeywordStyle" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 outline-none focus:border-blue-500">
+            <option value="mixed" selected>Mixed (Single Words & Key Phrases)</option>
+            <option value="single">Single Words Only</option>
+            <option value="compound">Include Descriptive Multi-word Terms</option>
+          </select>
+        </div>
+
+        <!-- Asset Classification -->
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1.5">Default Asset Type</label>
+          <select id="configAssetType" onchange="onAssetTypeDefaultChanged()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 outline-none focus:border-blue-500">
+            <option value="Photo" selected>Real Photo / Live Action</option>
+            <option value="Illustration">Vector / Illustration</option>
+            <option value="3D Render">3D Render / CGI</option>
+            <option value="AI Generated">AI Generated (Disclosed)</option>
+          </select>
+        </div>
+
+        <!-- Editorial Mode Toggle -->
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1.5">License Intent</label>
+          <select id="configLicenseType" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 outline-none focus:border-blue-500">
+            <option value="Commercial" selected>Commercial (Microstock)</option>
+            <option value="Editorial">Editorial (News / Documentary)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Custom Prompt Guidance / Negative Filter -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3 border-t border-slate-800 text-xs">
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1.5">Custom Context / Location / Brand</label>
+          <input 
+            type="text" 
+            id="configCustomPrompt" 
+            placeholder="e.g. Setting: Paris France, Theme: Eco-friendly energy, Brand: Generic" 
+            class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 outline-none focus:border-blue-500"
+          >
+        </div>
+        <div>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1.5">Negative Keywords to Exclude</label>
+          <input 
+            type="text" 
+            id="configNegativeKeywords" 
+            placeholder="e.g. person, indoor, night, text (comma-separated)" 
+            class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 outline-none focus:border-blue-500"
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- Multi-Image Batch Drag & Drop Upload Zone -->
     <section>
       <div 
         id="dropZone" 
         onclick="document.getElementById('fileInputElement').click()"
-        class="group relative border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-3xl p-8 sm:p-10 text-center bg-white shadow-xs transition-all duration-200 cursor-pointer overflow-hidden"
+        class="group relative border-2 border-dashed border-slate-800 hover:border-blue-500/80 rounded-3xl p-8 sm:p-12 text-center bg-slate-900/40 hover:bg-slate-900/70 glass-panel transition-all duration-300 cursor-pointer overflow-hidden shadow-2xl"
       >
-        <div class="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-blue-50/90 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
-          <i data-lucide="upload-cloud" class="w-7 h-7"></i>
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-blue-600/20 to-indigo-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-md">
+          <i data-lucide="upload-cloud" class="w-8 h-8"></i>
         </div>
 
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 text-slate-700 text-[11px] font-extrabold tracking-wide uppercase mb-3">
-          <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-600"></i>
-          <span>MULTI-IMAGE BATCH UPLOAD (UP TO 500 FILES)</span>
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[11px] font-extrabold tracking-wider uppercase mb-3 border border-blue-500/20">
+          <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+          <span>BATCH UPLOAD UP TO 500 ASSETS</span>
         </div>
 
-        <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-1">Drag & drop multiple images to extract visual SEO metadata</h3>
-        <p class="text-xs sm:text-sm text-slate-500 mb-4 font-medium">Each image receives its own distinct title, description, and 48 ranked tags</p>
+        <h2 class="text-lg sm:text-2xl font-black text-white mb-2 tracking-tight">Drag & drop your stock photos or illustrations here</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mb-5 max-w-xl mx-auto font-medium">
+          Vision AI automatically detects subject, action, lighting, composition, and generates platform-tailored titles with 48 ranked tags.
+        </p>
 
-        <div class="flex items-center justify-center flex-wrap gap-2 text-[11px] font-semibold text-slate-500">
-          <span class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200/60">JPG / JPEG</span>
-          <span class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200/60">PNG</span>
-          <span class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200/60">WEBP</span>
-          <span class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200/60">AVIF</span>
-          <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1">
-            <i data-lucide="cpu" class="w-3 h-3"></i> AI & Smart Heuristic Mode
+        <div class="flex items-center justify-center flex-wrap gap-2 text-[11px] font-semibold text-slate-400">
+          <span class="px-3 py-1 rounded-full bg-slate-950 border border-slate-800">JPG / JPEG</span>
+          <span class="px-3 py-1 rounded-full bg-slate-950 border border-slate-800">PNG</span>
+          <span class="px-3 py-1 rounded-full bg-slate-950 border border-slate-800">WEBP</span>
+          <span class="px-3 py-1 rounded-full bg-slate-950 border border-slate-800">AVIF</span>
+          <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold flex items-center gap-1">
+            <i data-lucide="zap" class="w-3 h-3"></i> Top 10 Weighting Engine Active
           </span>
         </div>
 
@@ -232,119 +379,175 @@
       </div>
     </section>
 
-    <!-- Batch Progress Card -->
-    <div id="batchProgressCard" class="hidden mt-6 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+    <!-- Batch Processing Progress Card -->
+    <div id="batchProgressCard" class="hidden bg-slate-900/80 glass-panel rounded-2xl p-5 border border-slate-800 shadow-xl">
+      <div class="flex items-center justify-between mb-2.5">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
             <i data-lucide="sparkles" class="w-4 h-4 spin-fast"></i>
           </div>
           <div>
-            <h4 class="font-bold text-slate-800 text-sm" id="batchProgressTitle">Analyzing Images...</h4>
-            <p class="text-xs text-slate-500" id="batchProgressSubtitle">Generating independent commercial titles and keywords</p>
+            <h4 class="font-bold text-white text-sm" id="batchProgressTitle">Analyzing Stock Assets...</h4>
+            <p class="text-xs text-slate-400" id="batchProgressSubtitle">Generating independent commercial titles and ranked keywords</p>
           </div>
         </div>
-        <span id="batchPercentText" class="text-sm font-extrabold text-blue-600">0%</span>
+        <span id="batchPercentText" class="text-sm font-black text-blue-400 font-mono">0%</span>
       </div>
 
-      <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-        <div id="batchProgressBar" class="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 h-2.5 rounded-full w-0 transition-all duration-300"></div>
+      <div class="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800/80">
+        <div id="batchProgressBar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-teal-400 h-2.5 rounded-full w-0 transition-all duration-300 shadow-sm shadow-blue-500"></div>
       </div>
     </div>
 
     <!-- Results Workspace -->
-    <div id="resultsWorkspace" class="hidden mt-6 space-y-4">
+    <div id="resultsWorkspace" class="hidden space-y-5">
       
       <!-- Batch Items Strip Carousel -->
-      <div class="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-sm">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 mb-3 border-b border-slate-100 gap-2">
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <i data-lucide="gallery-thumbnails" class="w-4 h-4 text-blue-600"></i>
-              Batch Queue (<span id="batchTotalCount">0</span> Images)
+      <div class="bg-slate-900/70 glass-panel p-4 rounded-3xl border border-slate-800 shadow-lg">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-2.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="gallery-thumbnails" class="w-4 h-4 text-blue-400"></i>
+              Batch Queue (<span id="batchTotalCount">0</span> Assets)
             </span>
-            <span id="batchStatusSummary" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+            <span id="batchStatusSummary" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
               0 / 0 completed
             </span>
           </div>
 
-          <!-- Batch Action Buttons -->
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button onclick="openApplyToAllModal()" title="Add keyword to all images in batch" class="text-xs font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 flex items-center gap-1 transition">
-              <i data-lucide="tags" class="w-3.5 h-3.5"></i> Apply Tag to All
+          <!-- Batch Action Quick Buttons -->
+          <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+            <button onclick="openBulkToolsModal()" title="Batch tools for entire queue" class="text-xs font-bold text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-xl border border-blue-500/30 flex items-center gap-1.5 transition">
+              <i data-lucide="sparkle" class="w-3.5 h-3.5"></i> Bulk Apply
             </button>
-            <button onclick="downloadAdobeStockCsv()" class="flex-1 sm:flex-none text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center justify-center gap-1.5 transition">
+            <button onclick="downloadAdobeStockCsv()" class="flex-1 sm:flex-none text-xs font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-3.5 py-1.5 rounded-xl border border-emerald-500/30 flex items-center justify-center gap-1.5 transition">
               <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Export CSV
             </button>
-            <button onclick="clearEntireBatch()" class="text-xs font-semibold text-rose-500 hover:text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-xl border border-rose-200 transition">
+            <button onclick="clearEntireBatch()" class="text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-xl border border-rose-500/30 transition">
               Clear All
             </button>
           </div>
         </div>
 
-        <!-- Horizontal Scrollable Thumbnail Cards -->
+        <!-- Horizontal Scrollable Thumbnail Carousel -->
         <div id="batchThumbnailList" class="flex gap-2.5 overflow-x-auto custom-scrollbar pb-2 pt-1"></div>
       </div>
 
       <!-- Active Item Workspace Card -->
-      <div class="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm">
+      <div class="bg-slate-900/70 glass-panel rounded-3xl p-5 sm:p-7 border border-slate-800 shadow-xl space-y-5">
         
-        <!-- Active Item Top Bar -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
-          <div class="flex items-center gap-3">
-            <div class="relative group cursor-pointer" onclick="openImageZoomModal()" title="Click to enlarge image">
-              <img id="activeImgPreview" src="" alt="Thumbnail" class="w-16 h-16 rounded-xl object-cover border border-slate-200 shadow-xs hover:opacity-90 transition">
-              <span id="activeImgFormat" class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] font-bold px-1 rounded">JPG</span>
-              <div class="absolute inset-0 bg-black/30 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
-                <i data-lucide="maximize-2" class="w-4 h-4"></i>
+        <!-- Active Item Top Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+          <div class="flex items-center gap-3.5">
+            <!-- Thumbnail with Click to Zoom Modal -->
+            <div class="relative group cursor-pointer" onclick="openImageZoomModal()" title="Click to view full preview">
+              <img id="activeImgPreview" src="" alt="Thumbnail" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border border-slate-700 shadow-md group-hover:opacity-90 transition">
+              <span id="activeImgFormat" class="absolute bottom-1 right-1 bg-black/85 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-white/10">JPG</span>
+              <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
+                <i data-lucide="maximize-2" class="w-5 h-5"></i>
               </div>
             </div>
+            
             <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span id="activePlatformBadge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">Adobe Stock</span>
-                <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span id="activePlatformBadge" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Adobe Stock</span>
+                <span id="seoQualityBadge" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> SEO Score: 98%
+                </span>
+                <span class="text-xs text-amber-400 font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                   <i data-lucide="award" class="w-3.5 h-3.5"></i> Top 10 Weighting
                 </span>
-                <span id="seoQualityBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  SEO Score: 98%
-                </span>
               </div>
-              <h3 id="activeFileNameText" class="text-sm font-bold text-slate-800 mt-1 max-w-[220px] sm:max-w-md truncate">image.jpg</h3>
+              <h3 id="activeFileNameText" class="text-sm sm:text-base font-bold text-white truncate max-w-[220px] sm:max-w-md">image.jpg</h3>
             </div>
           </div>
 
           <!-- Quick Actions per item -->
           <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            <button onclick="navigateBatch(-1)" id="prevItemBtn" title="Previous Image (Alt + Left Arrow)" class="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 transition">
+            <button onclick="navigateBatch(-1)" id="prevItemBtn" title="Previous Asset (Alt + Left Arrow)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">
               <i data-lucide="chevron-left" class="w-4 h-4"></i>
             </button>
-            <span id="itemPageIndicator" class="text-xs font-bold text-slate-500 px-1">1 / 1</span>
-            <button onclick="navigateBatch(1)" id="nextItemBtn" title="Next Image (Alt + Right Arrow)" class="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 transition">
+            <span id="itemPageIndicator" class="text-xs font-bold font-mono text-slate-400 px-1">1 / 1</span>
+            <button onclick="navigateBatch(1)" id="nextItemBtn" title="Next Asset (Alt + Right Arrow)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">
               <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </button>
-            <button onclick="reAnalyzeActiveItem()" title="Re-generate metadata for this image" class="flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-white text-slate-700 transition">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Re-Analyze
+            <button onclick="reAnalyzeActiveItem()" title="Re-analyze image with vision engine" class="flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-400"></i> Re-Analyze
             </button>
-            <button onclick="deleteActiveItem()" title="Remove this single image from batch" class="p-2 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-500 transition">
+            <button onclick="deleteActiveItem()" title="Remove this single asset from batch" class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
-            <button onclick="copyCurrentCsvRow()" class="flex items-center gap-1 text-xs font-bold px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm">
+            <button onclick="copyCurrentCsvRow()" class="flex items-center gap-1 text-xs font-bold px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition shadow-md shadow-blue-900/30">
               <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Row
             </button>
           </div>
         </div>
 
-        <div class="mt-5 space-y-4">
+        <!-- Category & Asset Attributes Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800 text-xs">
+          
+          <!-- Adobe Stock / Shutterstock Category -->
+          <div>
+            <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Stock Category</label>
+            <select id="activeCategorySelect" onchange="onCategoryChanged()" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-semibold outline-none focus:border-blue-500">
+              <option value="Lifestyle">Lifestyle</option>
+              <option value="Business">Business & Corporate</option>
+              <option value="People">People & Portraits</option>
+              <option value="Technology">Technology & AI</option>
+              <option value="The Environment">The Environment & Nature</option>
+              <option value="Landscapes">Landscapes & Scenic</option>
+              <option value="Food">Food & Drinks</option>
+              <option value="Animals">Animals & Wildlife</option>
+              <option value="Buildings and Architecture">Buildings & Architecture</option>
+              <option value="Graphic Resources">Graphic Resources & Textures</option>
+              <option value="Hobbies and Leisure">Hobbies & Leisure</option>
+              <option value="Industry">Industry & Manufacturing</option>
+              <option value="Plants and Flowers">Plants & Botanical</option>
+              <option value="Science">Science & Healthcare</option>
+              <option value="Social Issues">Social Issues</option>
+              <option value="Sports">Sports & Fitness</option>
+              <option value="Transport">Transportation</option>
+              <option value="Travel">Travel & Culture</option>
+            </select>
+          </div>
+
+          <!-- Asset Type -->
+          <div>
+            <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Asset Medium</label>
+            <select id="activeAssetMediumSelect" onchange="onMediumChanged()" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-semibold outline-none focus:border-blue-500">
+              <option value="Photo">Photography (Live Action)</option>
+              <option value="Vector / Illustration">Vector / Digital Illustration</option>
+              <option value="3D Render">3D Render / Graphic</option>
+              <option value="AI Generated">Generative AI Asset</option>
+            </select>
+          </div>
+
+          <!-- Editorial / Release Status -->
+          <div>
+            <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Releases / Licensing</label>
+            <input 
+              type="text" 
+              id="activeReleaseInput" 
+              oninput="onReleaseChanged()"
+              placeholder="e.g. Model Release on file (or leave empty)" 
+              class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 outline-none focus:border-blue-500"
+            >
+          </div>
+
+        </div>
+
+        <!-- Editable Form Fields -->
+        <div class="space-y-4">
           
           <!-- Title / Caption (Adobe Stock: 55-75 chars optimal) -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <label class="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="type" class="w-3.5 h-3.5 text-blue-600"></i> Title (Front-Loaded Core Subject)
+              <label class="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="type" class="w-3.5 h-3.5 text-blue-400"></i> Title (Front-Loaded Core Subject)
               </label>
               <div class="flex items-center gap-3">
-                <span id="titleCounter" class="text-xs text-slate-400 font-semibold">0 / 75 chars (Optimal: 55-75)</span>
-                <button onclick="copyValue('metaTitleBox', 'Title copied!')" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <span id="titleCounter" class="text-xs text-slate-400 font-mono font-semibold">0 / 75 chars (Optimal: 55-75)</span>
+                <button onclick="copyValue('metaTitleBox', 'Title copied!')" class="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1">
                   <i data-lucide="copy" class="w-3 h-3"></i> Copy
                 </button>
               </div>
@@ -352,25 +555,25 @@
             <input 
               type="text" 
               id="metaTitleBox" 
-              class="w-full text-xs sm:text-sm font-semibold text-slate-800 px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              class="w-full text-xs sm:text-sm font-semibold text-white px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
               oninput="onTitleChanged()"
               placeholder="Descriptive commercial title without spam words..."
             >
-            <div id="titleSpamWarning" class="hidden mt-1 text-[11px] text-amber-600 font-semibold flex items-center gap-1">
-              <i data-lucide="alert-circle" class="w-3 h-3"></i>
+            <div id="titleSpamWarning" class="hidden mt-1.5 text-[11px] text-amber-400 font-semibold flex items-center gap-1.5 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
               <span id="titleSpamWarningText">Avoid spam words for higher acceptance</span>
             </div>
           </div>
 
-          <!-- Description -->
+          <!-- Description / Caption -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <label class="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="align-left" class="w-3.5 h-3.5 text-indigo-600"></i> Description / Caption
+              <label class="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="align-left" class="w-3.5 h-3.5 text-indigo-400"></i> Description / Caption (Story, Setting & Use Case)
               </label>
               <div class="flex items-center gap-3">
-                <span id="descCounter" class="text-xs text-slate-400 font-semibold">0 chars</span>
-                <button onclick="copyValue('metaDescBox', 'Description copied!')" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <span id="descCounter" class="text-xs text-slate-400 font-mono font-semibold">0 chars</span>
+                <button onclick="copyValue('metaDescBox', 'Description copied!')" class="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1">
                   <i data-lucide="copy" class="w-3 h-3"></i> Copy
                 </button>
               </div>
@@ -378,180 +581,225 @@
             <textarea 
               id="metaDescBox" 
               rows="2"
-              class="w-full text-xs sm:text-sm text-slate-700 px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition custom-scrollbar"
+              class="w-full text-xs sm:text-sm text-slate-200 px-4 py-2.5 rounded-2xl bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition custom-scrollbar"
               oninput="onDescChanged()"
               placeholder="Commercial description including subject, location and use case..."
             ></textarea>
           </div>
 
-          <!-- Keywords / Tags Section -->
+          <!-- Keywords / Ranked Tags Section -->
           <div>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <label class="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <i data-lucide="tags" class="w-3.5 h-3.5 text-emerald-600"></i> Ranked Keywords
+                <label class="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="tags" class="w-3.5 h-3.5 text-emerald-400"></i> Ranked Keywords
                 </label>
-                <span id="tagCountBadge" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span id="tagCountBadge" class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   0 / 48 tags
                 </span>
-                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                  Top 10 Highlighted (80% Weight)
+                <span class="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
+                  #1 to #10 Carry 80% Ranking Weight
                 </span>
               </div>
               
               <div class="flex items-center gap-3">
-                <button onclick="copyAllTagsString()" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                  <i data-lucide="copy" class="w-3 h-3"></i> Copy All
+                <button onclick="copyAllTagsString()" class="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3 h-3"></i> Copy All Tags
                 </button>
-                <button onclick="clearAllTags()" class="text-xs font-semibold text-rose-500 hover:text-rose-600">
-                  Clear
+                <button onclick="clearAllTags()" class="text-xs font-semibold text-rose-400 hover:text-rose-300">
+                  Clear Tags
                 </button>
               </div>
             </div>
 
-            <!-- Add Tag Manually & Paste Handler -->
-            <div class="flex gap-2 mb-2">
+            <!-- Add Tag Input Field -->
+            <div class="flex gap-2 mb-2.5">
               <input 
                 type="text" 
                 id="newTagInputField" 
-                placeholder="Add tag, or paste comma-separated keywords..." 
-                class="flex-1 text-xs px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                placeholder="Type keyword, or paste comma-separated list (e.g. travel, vacation, beach)..." 
+                class="flex-1 text-xs px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:border-blue-500 outline-none"
                 onkeydown="if(event.key==='Enter'){event.preventDefault();addTagManually();}"
               >
-              <button onclick="addTagManually(true)" title="Add to beginning as high-ranking Top 10 keyword" class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 flex items-center gap-1">
+              <button onclick="addTagManually(true)" title="Add to beginning as high-ranking Top 10 keyword" class="px-3 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-bold border border-blue-500/30 flex items-center gap-1 transition">
                 <i data-lucide="arrow-up-to-line" class="w-3.5 h-3.5"></i> Add to Top 10
               </button>
-              <button onclick="addTagManually(false)" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1">
+              <button onclick="addTagManually(false)" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1 transition shadow-md shadow-blue-900/30">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Tag
               </button>
             </div>
 
             <!-- Keyword Tags Box -->
-            <div id="keywordTagsBox" class="flex flex-wrap gap-1.5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 min-h-[90px] max-h-60 overflow-y-auto custom-scrollbar"></div>
+            <div id="keywordTagsBox" class="flex flex-wrap gap-1.5 p-3.5 rounded-2xl bg-slate-950 border border-slate-800 min-h-[90px] max-h-64 overflow-y-auto custom-scrollbar"></div>
             
-            <div class="flex items-center justify-between mt-2 text-[11px] text-slate-500">
-              <span>💡 <strong class="text-slate-700">Tip:</strong> The first 10 blue-badged keywords carry 80% search ranking priority in Adobe Stock indexing. Use <i data-lucide="arrow-up" class="inline w-3 h-3 text-blue-600"></i> on any tag to promote it!</span>
-              <span id="tagsAdviceText" class="font-semibold text-emerald-600">Ideal range: 35-49 tags</span>
+            <div class="flex items-center justify-between mt-2.5 text-[11px] text-slate-400 flex-wrap gap-2">
+              <span>💡 <strong class="text-slate-200">Pro Tip:</strong> Click <span class="text-blue-400 font-bold">▲</span> on any tag to promote it into the Top 10 primary index tier!</span>
+              <span id="tagsAdviceText" class="font-semibold text-emerald-400">Target Range: 35-48 tags</span>
             </div>
           </div>
 
         </div>
       </div>
+
     </div>
 
   </main>
 
-  <!-- Apply Tag to All Modal -->
-  <div id="applyAllModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+  <!-- Bulk Tools Modal (PixCraftAI Bulk Operations) -->
+  <div id="bulkToolsModal" class="hidden fixed inset-0 z-50 bg-black/70 glass-panel flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
             <i data-lucide="layers" class="w-4 h-4"></i>
           </div>
-          <h3 class="font-extrabold text-slate-800 text-base">Apply Keywords to Entire Batch</h3>
+          <h3 class="font-extrabold text-white text-base">Batch Operations Suite</h3>
         </div>
-        <button onclick="closeApplyToAllModal()" class="text-slate-400 hover:text-slate-600">
+        <button onclick="closeBulkToolsModal()" class="text-slate-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <p class="text-xs text-slate-600 mb-4 leading-relaxed">
-        Add one or more keywords (separated by commas) to all <strong id="applyAllCountText" class="text-slate-800">0</strong> images in the current queue:
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Apply updates across all <strong id="bulkModalCountText" class="text-white">0</strong> images in the current batch queue:
       </p>
 
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Keywords to Append</label>
+      <!-- Operation Tabs -->
+      <div class="space-y-4 text-xs">
+        
+        <!-- 1. Add Keywords to All -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+          <label class="block font-bold text-slate-300 uppercase tracking-wider">1. Add Keywords to All Assets</label>
           <input 
             type="text" 
-            id="applyAllTagsInput" 
+            id="bulkAddKeywordsInput" 
             placeholder="e.g. summer, travel, vacation, outdoor" 
-            class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            class="w-full text-xs px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white outline-none focus:border-blue-500"
           >
+          <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-1.5 text-slate-400 cursor-pointer">
+              <input type="checkbox" id="bulkTop10Check" class="rounded border-slate-700 bg-slate-900 text-blue-600">
+              <span>Insert at Top 10 priority</span>
+            </label>
+            <button onclick="executeBulkAddKeywords()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition">
+              Apply Tags
+            </button>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <input type="checkbox" id="applyAsTop10Check" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-          <label for="applyAsTop10Check" class="text-xs text-slate-700 font-medium cursor-pointer">Place at beginning of list (Top 10 priority)</label>
+
+        <!-- 2. Set Category for All -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+          <label class="block font-bold text-slate-300 uppercase tracking-wider">2. Set Category for All Assets</label>
+          <div class="flex gap-2">
+            <select id="bulkCategorySelect" class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white outline-none">
+              <option value="Lifestyle">Lifestyle</option>
+              <option value="Business">Business</option>
+              <option value="People">People</option>
+              <option value="Technology">Technology</option>
+              <option value="The Environment">The Environment</option>
+              <option value="Landscapes">Landscapes</option>
+              <option value="Food">Food</option>
+              <option value="Animals">Animals</option>
+              <option value="Buildings and Architecture">Buildings & Architecture</option>
+              <option value="Travel">Travel</option>
+            </select>
+            <button onclick="executeBulkCategory()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold border border-slate-700 transition">
+              Set Category
+            </button>
+          </div>
         </div>
+
+        <!-- 3. Remove a Keyword from All -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+          <label class="block font-bold text-slate-300 uppercase tracking-wider">3. Remove Specific Keyword from All</label>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="bulkRemoveKeywordInput" 
+              placeholder="Tag to remove (e.g. background)" 
+              class="flex-1 text-xs px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white outline-none"
+            >
+            <button onclick="executeBulkRemoveKeyword()" class="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold transition">
+              Remove Tag
+            </button>
+          </div>
+        </div>
+
       </div>
 
-      <div class="flex gap-2 mt-5">
-        <button onclick="closeApplyToAllModal()" class="w-1/2 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
-          Cancel
-        </button>
-        <button onclick="executeApplyToAll()" class="w-1/2 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
-          Apply to All Images
+      <div class="pt-2">
+        <button onclick="closeBulkToolsModal()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition">
+          Done
         </button>
       </div>
     </div>
   </div>
 
   <!-- Image Zoom Modal -->
-  <div id="imageZoomModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" onclick="closeImageZoomModal()">
-    <div class="relative max-w-3xl max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+  <div id="imageZoomModal" class="hidden fixed inset-0 z-50 bg-black/90 glass-panel flex items-center justify-center p-4" onclick="closeImageZoomModal()">
+    <div class="relative max-w-4xl max-h-[92vh] flex flex-col items-center" onclick="event.stopPropagation()">
       <button onclick="closeImageZoomModal()" class="absolute -top-10 right-0 text-white/80 hover:text-white p-1">
         <i data-lucide="x" class="w-6 h-6"></i>
       </button>
       <img id="enlargedImagePreview" src="" class="max-h-[80vh] w-auto rounded-2xl shadow-2xl object-contain border border-white/10" alt="Enlarged">
-      <p id="enlargedImageCaption" class="text-white text-xs font-semibold mt-3 bg-black/50 px-4 py-1.5 rounded-full border border-white/10 truncate max-w-lg"></p>
+      <p id="enlargedImageCaption" class="text-white text-xs font-semibold mt-3 bg-black/60 px-4 py-2 rounded-full border border-white/10 truncate max-w-lg"></p>
     </div>
   </div>
 
-  <!-- API Key & Settings Dialog -->
-  <div id="apiKeyDialog" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+  <!-- API Key & Vision Engine Dialog -->
+  <div id="apiKeyDialog" class="hidden fixed inset-0 z-50 bg-black/70 glass-panel flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
             <i data-lucide="key" class="w-4 h-4"></i>
           </div>
-          <h3 class="font-extrabold text-slate-800 text-base">Gemini Vision AI Engine</h3>
+          <h3 class="font-extrabold text-white text-base">Gemini Vision AI Engine</h3>
         </div>
-        <button onclick="closeApiModal()" class="text-slate-400 hover:text-slate-600">
+        <button onclick="closeApiModal()" class="text-slate-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <p class="text-xs text-slate-600 mb-4 leading-relaxed">
-        The application is powered by Google Gemini Vision. By default, it operates in <strong>Fast Built-in Mode</strong>. Add your personal Google Gemini API key to enable direct deep vision recognition:
+      <p class="text-xs text-slate-300 leading-relaxed">
+        PixCraftAI works automatically in <strong>Fast Built-in Mode</strong>. To connect Google Gemini Vision for deep subject recognition, enter your free API key below:
       </p>
 
-      <div class="space-y-3">
+      <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Custom Gemini API Key</label>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Google Gemini API Key</label>
           <input 
             type="password" 
             id="customKeyInput" 
-            placeholder="Leave empty for fast built-in heuristic mode" 
-            class="w-full text-xs font-mono px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="Leave empty for auto built-in heuristic mode" 
+            class="w-full font-mono px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white outline-none focus:border-blue-500"
           >
-          <span class="text-[11px] text-slate-400 block mt-1">Get a free key anytime from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 underline">aistudio.google.com</a></span>
+          <span class="text-[11px] text-slate-400 block mt-1">Get your free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 underline">aistudio.google.com</a></span>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Select Vision Model</label>
-          <select id="modelSelectBox" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium focus:ring-2 focus:ring-blue-500 outline-none">
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fastest & Smartest)</option>
+          <label class="block font-bold text-slate-400 uppercase tracking-wider mb-1">Select Vision Model</label>
+          <select id="modelSelectBox" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white outline-none">
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fastest & Best)</option>
             <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
             <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
           </select>
         </div>
 
-        <div class="pt-1">
-          <button type="button" onclick="testApiKeyConnection()" id="testApiBtn" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
-            <span>Test API Connection</span>
+        <div>
+          <button type="button" onclick="testApiKeyConnection()" id="testApiBtn" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center gap-1.5 transition border border-slate-700">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-400"></i>
+            <span>Test Connection</span>
           </button>
-          <div id="testApiStatusMsg" class="text-xs font-semibold mt-1 text-center hidden"></div>
+          <div id="testApiStatusMsg" class="text-xs font-semibold mt-1.5 text-center hidden"></div>
         </div>
       </div>
 
-      <div class="flex gap-2 mt-5">
-        <button onclick="closeApiModal()" class="w-1/2 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button onclick="closeApiModal()" class="w-1/2 py-2 rounded-xl border border-slate-800 text-xs font-bold text-slate-400 hover:bg-slate-800 transition">
           Cancel
         </button>
-        <button onclick="saveApiSetting()" class="w-1/2 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
+        <button onclick="saveApiSetting()" class="w-1/2 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
           Save Settings
         </button>
       </div>
@@ -560,16 +808,27 @@
 
   <!-- Toast Notification -->
   <div id="toastBox" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-    <div class="bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 border border-slate-700 text-xs font-bold">
-      <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+    <div class="bg-slate-900/95 glass-panel text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 border border-slate-700 text-xs font-bold">
+      <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
       <span id="toastContent">Success!</span>
     </div>
   </div>
 
-  <footer class="border-t border-slate-200 bg-white py-4 px-4 text-center text-xs text-slate-400">
-    <p>PixcraftAI • Commercial Stock Metadata Generator • Compliant with Adobe Stock, Shutterstock, and Freepik 2026 guidelines</p>
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-[#080c14] py-5 px-4 text-center text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-400">PixCraftAI Metadata Suite</span>
+        <span>•</span>
+        <span>Compliant with 2026 Adobe Stock, Shutterstock & Freepik Contributor Policies</span>
+      </div>
+      <div>
+        <span>Top 10 Weighting Engine • Batch Multi-Platform Export</span>
+      </div>
+    </div>
   </footer>
 
+  <!-- Application Logic -->
   <script>
     let activePlatform = 'Adobe Stock';
     let batchItemList = [];
@@ -578,50 +837,98 @@
     let userApiKey = localStorage.getItem('pixcraft_custom_api_key') || "";
     let selectedModel = localStorage.getItem('pixcraft_selected_model') || "gemini-2.5-flash";
 
-    const SPAM_WORDS = ['isolated', 'isolated on white', 'stunning', 'beautiful', '4k', '8k', 'copyspace', 'background', 'wallpaper', 'nobody'];
+    const SPAM_WORDS = ['isolated', 'isolated on white', 'stunning', 'beautiful', '4k', '8k', 'copyspace', 'copy space', 'background', 'wallpaper', 'nobody'];
 
     const PLATFORM_CRITERIA = {
       'Adobe Stock': { 
         titleTarget: '55 to 75 chars',
-        rules: 'Crucial: First 10 keywords MUST be the most specific, highest-volume commercial terms representing the exact subject and setting (Adobe Stock gives 80% search ranking to the first 10 tags). Provide exactly 46 to 48 unique keywords. Title must be 55-75 chars, front-loaded with subject, no spam buzzwords (do NOT use "background", "stunning", "isolated on white", "4k").' 
+        rules: 'Crucial: First 10 keywords MUST be the most specific, highest-volume commercial terms representing the exact subject and setting (Adobe Stock gives 80% search ranking to the first 10 tags). Provide exactly 46 to 48 unique keywords. Title must be 55-75 chars, front-loaded with subject, no spam buzzwords (do NOT use "background", "stunning", "isolated on white", "4k").',
+        notice: 'Adobe Stock: 55-75 chars • First 10 Tags Carry 80% Search Weight'
       },
       'Shutterstock': { 
         titleTarget: '60 to 90 chars',
-        rules: 'Full descriptive sentence with lighting style, shot type, camera angle, followed by 48 comprehensive keywords.' 
+        rules: 'Full descriptive sentence with lighting style, shot type, camera angle, followed by 48 comprehensive keywords.',
+        notice: 'Shutterstock: 60-90 chars • Full Sentence Caption & Categories'
       },
       'Freepik': { 
         titleTarget: '50 to 70 chars',
-        rules: 'Graphic designer utility, background color, minimal attributes, 35 clean tags.' 
+        rules: 'Graphic designer utility, background color, minimal attributes, 35 clean tags.',
+        notice: 'Freepik: 50-70 chars • Clean Graphic & Design Utility Tags'
       },
       'Vecteezy': { 
         titleTarget: '50 to 75 chars',
-        rules: 'Vector / design template utility, banner concept, copy space, 35 to 40 tags.' 
+        rules: 'Vector / design template utility, banner concept, copy space, 35 to 40 tags.',
+        notice: 'Vecteezy: 50-75 chars • Vector & Template Concepts'
       },
       'Depositphotos': { 
         titleTarget: '60 to 80 chars',
-        rules: 'Commercial caption with emotional and synonymous search phrases, 45 tags.' 
+        rules: 'Commercial caption with emotional and synonymous search phrases, 45 tags.',
+        notice: 'Depositphotos: 60-80 chars • High Keyword Density'
       },
       '123RF': { 
         titleTarget: '55 to 75 chars',
-        rules: 'Primary subject hierarchy down to broad conceptual categorizations, 45 tags.' 
+        rules: 'Primary subject hierarchy down to broad conceptual categorizations, 45 tags.',
+        notice: '123RF: 55-75 chars • Structured Subject Hierarchy'
       },
       'Dreamstime': { 
         titleTarget: '55 to 75 chars',
-        rules: 'Detailed subject caption with high commercial keyword density, 45 tags.' 
+        rules: 'Detailed subject caption with high commercial keyword density, 45 tags.',
+        notice: 'Dreamstime: 55-75 chars • 45 Commercial Tags'
+      },
+      'Alamy': { 
+        titleTarget: '60 to 100 chars',
+        rules: 'Detailed documentary caption answering who, what, where, when. Comprehensive tags.',
+        notice: 'Alamy: 60-100 chars • Detailed Editorial & Commercial'
       }
     };
 
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
+      initTheme();
       refreshKeyBadge();
       initDragAndDrop();
       initKeyboardShortcuts();
       document.getElementById('modelSelectBox').value = selectedModel;
     });
 
+    // Theme Management
+    function initTheme() {
+      const savedTheme = localStorage.getItem('pixcraft_theme') || 'dark';
+      applyTheme(savedTheme);
+    }
+
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      const sunIcon = document.getElementById('themeSunIcon');
+      const moonIcon = document.getElementById('themeMoonIcon');
+
+      if (theme === 'light') {
+        html.classList.remove('dark');
+        document.body.className = 'min-h-screen bg-slate-50 text-slate-800 flex flex-col justify-between selection:bg-blue-600 selection:text-white';
+        if (sunIcon) sunIcon.classList.remove('hidden');
+        if (moonIcon) moonIcon.classList.add('hidden');
+      } else {
+        html.classList.add('dark');
+        document.body.className = 'min-h-screen bg-[#080c14] text-slate-100 flex flex-col justify-between selection:bg-blue-600 selection:text-white';
+        if (sunIcon) sunIcon.classList.add('hidden');
+        if (moonIcon) moonIcon.classList.remove('hidden');
+      }
+      localStorage.setItem('pixcraft_theme', theme);
+      lucide.createIcons();
+    }
+
+    function toggleTheme() {
+      const current = localStorage.getItem('pixcraft_theme') || 'dark';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    function toggleAdvancedSettings() {
+      const panel = document.getElementById('advancedSettingsPanel');
+      panel.classList.toggle('hidden');
+    }
+
     function initKeyboardShortcuts() {
       window.addEventListener('keydown', (e) => {
-        // Alt + Left Arrow or Alt + Right Arrow
         if (e.altKey && e.key === 'ArrowLeft') {
           e.preventDefault();
           navigateBatch(-1);
@@ -631,7 +938,6 @@
         }
       });
 
-      // Prevent accidental browser file navigation when dragging files outside dropZone
       window.addEventListener('dragover', (e) => e.preventDefault());
       window.addEventListener('drop', (e) => e.preventDefault());
     }
@@ -642,7 +948,7 @@
       toast.classList.remove('translate-y-20', 'opacity-0');
       setTimeout(() => {
         toast.classList.add('translate-y-20', 'opacity-0');
-      }, 2400);
+      }, 2600);
     }
 
     function openApiModal() {
@@ -663,7 +969,7 @@
       localStorage.setItem('pixcraft_selected_model', selectedModel);
       refreshKeyBadge();
       closeApiModal();
-      showToast(userApiKey ? 'Custom Gemini API Key Saved' : 'Using Fast Built-in Mode');
+      showToast(userApiKey ? 'Custom Gemini Vision Key Saved' : 'Using Fast Built-in Mode');
     }
 
     async function testApiKeyConnection() {
@@ -672,13 +978,13 @@
       const model = document.getElementById('modelSelectBox').value;
 
       if (!key) {
-        statusDiv.className = 'text-xs font-semibold mt-1 text-center text-amber-600';
-        statusDiv.innerText = 'Please enter an API key to test, or leave blank for built-in mode.';
+        statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-amber-400';
+        statusDiv.innerText = 'Please enter an API key, or leave empty for auto built-in mode.';
         statusDiv.classList.remove('hidden');
         return;
       }
 
-      statusDiv.className = 'text-xs font-semibold mt-1 text-center text-blue-600';
+      statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-blue-400';
       statusDiv.innerText = 'Connecting to Google Gemini API...';
       statusDiv.classList.remove('hidden');
 
@@ -692,51 +998,38 @@
         });
 
         if (res.ok) {
-          statusDiv.className = 'text-xs font-bold mt-1 text-center text-emerald-600';
+          statusDiv.className = 'text-xs font-bold mt-1.5 text-center text-emerald-400';
           statusDiv.innerText = `✓ Connected successfully to ${model}!`;
         } else {
           const errData = await res.json().catch(() => ({}));
           const errMsg = errData.error?.message || `HTTP ${res.status}`;
-          statusDiv.className = 'text-xs font-semibold mt-1 text-center text-rose-600';
+          statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-rose-400';
           statusDiv.innerText = `Connection failed: ${errMsg}`;
         }
       } catch (err) {
-        statusDiv.className = 'text-xs font-semibold mt-1 text-center text-rose-600';
+        statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-rose-400';
         statusDiv.innerText = `Network error: ${err.message}`;
       }
     }
 
     function refreshKeyBadge() {
       const badge = document.getElementById('keyLabelBadge');
-      const onlineBadge = document.getElementById('aiOnlineBadge');
       if (userApiKey) {
         badge.innerText = `Gemini AI (${selectedModel.replace('gemini-', '')})`;
-        onlineBadge.innerText = 'Vision AI Active';
-        onlineBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200';
       } else {
         badge.innerText = 'AI Mode: Fast Built-in';
-        onlineBadge.innerText = 'Smart Engine Ready';
-        onlineBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200';
       }
     }
 
     function selectPlatform(name, btn) {
       activePlatform = name;
-      // Fixed selector bug: class is .platform-icon-btn, not .platform-btn
-      document.querySelectorAll('.platform-icon-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('activePlatformBadge').innerText = name;
       
-      const badge = document.getElementById('seoNoticeBadge');
-      if (name === 'Adobe Stock') {
-        badge.innerHTML = `<i data-lucide="zap" class="w-3.5 h-3.5 text-blue-600"></i><span>Adobe Stock Engine Active: First 10 Keywords Carry 80% Search Weight • 48 Ranked Tags</span>`;
-      } else if (name === 'Shutterstock') {
-        badge.innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5 text-blue-600"></i><span>Shutterstock Engine Active: Full Sentence Descriptions & Contextual Synonyms</span>`;
-      } else {
-        badge.innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5 text-blue-600"></i><span>Optimized for ${name} Contributor Standards</span>`;
-      }
-      lucide.createIcons();
-      showToast(`Selected: ${name} SEO Engine`);
+      const info = PLATFORM_CRITERIA[name] || PLATFORM_CRITERIA['Adobe Stock'];
+      document.getElementById('platformConstraintNotice').innerText = info.notice;
+      showToast(`Selected: ${name} Engine`);
     }
 
     function prepareFastImageForAI(file) {
@@ -746,7 +1039,7 @@
           const img = new Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const maxDimension = 768; // 768px gives crisp visual details for Gemini Vision while keeping payload < 60KB
+            const maxDimension = 768;
             let w = img.width;
             let h = img.height;
 
@@ -792,7 +1085,7 @@
         dropZone.addEventListener(name, (e) => {
           e.preventDefault();
           e.stopPropagation();
-          dropZone.classList.add('drag-active');
+          dropZone.classList.add('dropzone-active');
         });
       });
 
@@ -800,7 +1093,7 @@
         dropZone.addEventListener(name, (e) => {
           e.preventDefault();
           e.stopPropagation();
-          dropZone.classList.remove('drag-active');
+          dropZone.classList.remove('dropzone-active');
         });
       });
 
@@ -826,6 +1119,7 @@
         return;
       }
 
+      const defaultMedium = document.getElementById('configAssetType').value;
       const startIndex = batchItemList.length;
       
       for (let i = 0; i < imageFiles.length; i++) {
@@ -839,6 +1133,9 @@
           title: '',
           description: '',
           keywords: [],
+          category: 'Lifestyle',
+          medium: defaultMedium,
+          releases: '',
           platform: activePlatform,
           status: 'pending'
         });
@@ -879,16 +1176,16 @@
             if (userApiKey && userApiKey.trim()) {
               meta = await fetchStockMetadataWithGemini(base64Data, mimeType, item.fileName);
             } else {
-              // Built-in smart heuristic engine - instant and high quality
               meta = generateSmartFallbackMetadata(item.fileName, itemIdx);
             }
 
             item.title = meta.title;
             item.description = meta.description;
             item.keywords = meta.keywords && meta.keywords.length > 0 ? meta.keywords : [];
+            item.category = meta.category || item.category;
             item.status = 'done';
           } catch (err) {
-            console.warn(`Vision AI issue for ${item.fileName}, using smart distinct generator:`, err);
+            console.warn(`Vision AI issue for ${item.fileName}, using smart heuristic generator:`, err);
             const fallback = generateSmartFallbackMetadata(item.fileName, itemIdx);
             if (!item.dataUrl) {
               item.dataUrl = await readFileDataUrl(item.file);
@@ -896,6 +1193,7 @@
             item.title = fallback.title;
             item.description = fallback.description;
             item.keywords = fallback.keywords;
+            item.category = fallback.category || item.category;
             item.status = 'done';
           }
 
@@ -903,7 +1201,7 @@
           const percent = Math.round((completedCount / totalNew) * 100);
           document.getElementById('batchProgressBar').style.width = `${percent}%`;
           document.getElementById('batchPercentText').innerText = `${percent}%`;
-          document.getElementById('batchProgressTitle').innerText = `Analyzed ${completedCount} of ${totalNew} images...`;
+          document.getElementById('batchProgressTitle').innerText = `Processed ${completedCount} of ${totalNew} assets...`;
 
           updateBatchThumbnail(itemIdx);
           if (currentActiveIdx === itemIdx) {
@@ -921,7 +1219,7 @@
       isProcessingBatch = false;
       progressCard.classList.add('hidden');
       updateBatchUI();
-      showToast(`Generated SEO metadata for ${totalNew} images!`);
+      showToast(`Finished generating metadata for ${totalNew} images!`);
     }
 
     function readFileDataUrl(file) {
@@ -935,6 +1233,9 @@
 
     async function fetchStockMetadataWithGemini(base64Image, mimeType, fileName) {
       const criteria = PLATFORM_CRITERIA[activePlatform] || PLATFORM_CRITERIA['Adobe Stock'];
+      const targetCount = parseInt(document.getElementById('configKeywordCount').value) || 48;
+      const customPrompt = document.getElementById('configCustomPrompt').value.trim();
+      const negativePrompt = document.getElementById('configNegativeKeywords').value.trim();
 
       const promptInstructions = `You are an elite microstock contributor and Adobe Stock SEO search ranking specialist.
 Thoroughly inspect every visual detail of this image (Filename: "${fileName}").
@@ -943,6 +1244,8 @@ Look closely at:
 2. Exact action, posture, expression, or activity taking place.
 3. Setting, background, architectural environment, indoor/outdoor lighting conditions (golden hour, studio light, cinematic).
 4. Concept, emotion, commercial utility, advertising themes.
+${customPrompt ? `User Custom Guidance: ${customPrompt}` : ''}
+${negativePrompt ? `Exclude these negative words: ${negativePrompt}` : ''}
 
 Marketplace Rules:
 ${criteria.rules}
@@ -953,8 +1256,9 @@ Key requirements for Adobe Stock:
    - Tags 1-3: Exact primary subject & noun.
    - Tags 4-6: Main action, activity, or core visual feature.
    - Tags 7-10: Primary setting, environment, and specific emotion/style.
-3. Tags 11-48: Synonyms, visual attributes, copy space, composition, lighting, design concepts.
-4. Total tags: Exactly 46 to 48 distinct keywords, all lowercase, single words or short 2-word terms, no trademarks.`;
+3. Tags 11-${targetCount}: Synonyms, visual attributes, copy space, composition, lighting, design concepts.
+4. Total tags: Exactly ${targetCount} distinct keywords, all lowercase, single words or short 2-word terms, no trademarks.
+5. Category: Choose one exact Adobe Stock category: Lifestyle, Business, People, Technology, The Environment, Landscapes, Food, Animals, Buildings and Architecture, Graphic Resources, Hobbies and Leisure, Industry, Plants and Flowers, Science, Social Issues, Sports, Transport, Travel.`;
 
       const payload = {
         contents: [
@@ -981,10 +1285,11 @@ Key requirements for Adobe Stock:
               "keywords": {
                 "type": "ARRAY",
                 "items": { "type": "STRING" }
-              }
+              },
+              "category": { "type": "STRING" }
             },
-            "required": ["title", "description", "keywords"],
-            "propertyOrdering": ["title", "description", "keywords"]
+            "required": ["title", "description", "keywords", "category"],
+            "propertyOrdering": ["title", "description", "keywords", "category"]
           },
           temperature: 0.2
         }
@@ -1006,7 +1311,6 @@ Key requirements for Adobe Stock:
           });
 
           if (!response.ok) {
-            // If authentication/key issue (400, 401, 403), don't waste time retrying
             if (response.status >= 400 && response.status < 500 && response.status !== 429) {
               throw new Error(`API client error ${response.status}`);
             }
@@ -1035,37 +1339,36 @@ Key requirements for Adobe Stock:
       const words = cleanName.split(" ").filter(w => w.length > 2);
       
       const themes = [
-        { subject: "Modern Lifestyle Concept", tag1: "lifestyle", tag2: "contemporary", tag3: "everyday life", tag4: "activity", tag5: "person" },
-        { subject: "Professional Business Strategy", tag1: "business", tag2: "professional", tag3: "corporate", tag4: "office", tag5: "strategy" },
-        { subject: "Creative Studio Visual", tag1: "creative", tag2: "minimalist", tag3: "studio shot", tag4: "artistic", tag5: "elegance" },
-        { subject: "Commercial Advertising Asset", tag1: "marketing", tag2: "advertising", tag3: "commercial", tag4: "branding", tag5: "product" },
-        { subject: "High Quality Visual Composition", tag1: "concept", tag2: "high resolution", tag3: "digital content", tag4: "graphic", tag5: "modern" },
-        { subject: "Nature and Environmental Concept", tag1: "nature", tag2: "scenic", tag3: "environment", tag4: "organic", tag5: "landscape" },
-        { subject: "Technology and Innovation Concept", tag1: "technology", tag2: "innovation", tag3: "futuristic", tag4: "digital", tag5: "network" }
+        { subject: "Modern Lifestyle Concept", category: "Lifestyle", tag1: "lifestyle", tag2: "contemporary", tag3: "everyday life", tag4: "activity", tag5: "person" },
+        { subject: "Professional Business Strategy", category: "Business", tag1: "business", tag2: "professional", tag3: "corporate", tag4: "office", tag5: "strategy" },
+        { subject: "Creative Studio Visual", category: "Graphic Resources", tag1: "creative", tag2: "minimalist", tag3: "studio shot", tag4: "artistic", tag5: "elegance" },
+        { subject: "Commercial Advertising Asset", category: "Business", tag1: "marketing", tag2: "advertising", tag3: "commercial", tag4: "branding", tag5: "product" },
+        { subject: "Scenic Nature Landscape", category: "Landscapes", tag1: "nature", tag2: "scenic", tag3: "environment", tag4: "organic", tag5: "landscape" },
+        { subject: "Technology and Innovation Concept", category: "Technology", tag1: "technology", tag2: "innovation", tag3: "futuristic", tag4: "digital", tag5: "network" },
+        { subject: "Gourmet Delicious Food Presentation", category: "Food", tag1: "food", tag2: "delicious", tag3: "gourmet", tag4: "culinary", tag5: "fresh" },
+        { subject: "International Travel and Tourism", category: "Travel", tag1: "travel", tag2: "vacation", tag3: "tourism", tag4: "destination", tag5: "journey" }
       ];
       const selectedTheme = themes[seedIndex % themes.length];
 
       let subjectPhrase = words.length > 0 ? words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") : selectedTheme.subject;
       if (subjectPhrase.length < 20) {
-        subjectPhrase = `${subjectPhrase} in Professional Commercial Studio`;
+        subjectPhrase = `${subjectPhrase} in Professional Commercial Setting`;
       }
 
-      // Title optimal: 55-75 chars
       let title = subjectPhrase;
       if (title.length < 55) {
-        title = `${subjectPhrase} for Business Advertising and Media`;
+        title = `${subjectPhrase} for Advertising and Publishing`;
       }
       title = title.slice(0, 75).trim();
 
-      const description = `High quality commercial stock image featuring ${subjectPhrase.toLowerCase()}, optimized for digital advertising, editorial publishing, and website media.`;
+      const description = `Commercial stock visual asset featuring ${subjectPhrase.toLowerCase()}, suitable for editorial publishing, marketing campaigns, and web media.`;
 
-      // Build Top 10 high-ranking tags
       const top10Candidates = [
         ...(words.length > 0 ? words.map(w => w.toLowerCase()) : [selectedTheme.tag1, selectedTheme.tag2]),
         selectedTheme.tag3,
         selectedTheme.tag4,
         selectedTheme.tag5,
-        "professional", "commercial", "closeup", "horizontal", "bright"
+        "commercial", "professional", "closeup", "horizontal", "bright"
       ];
       const top10 = Array.from(new Set(top10Candidates)).slice(0, 10);
 
@@ -1076,11 +1379,12 @@ Key requirements for Adobe Stock:
         "fresh", "view", "visual", "artistic", "creative", "template", "space",
         "perspective", "shadow", "clear", "sharp", "commercial photo", "marketing",
         "banner", "concept", "backdrop", "advertising", "object", "nobody", "copy space",
-        "contemporary", "elegance", "perfection", "vibrant", "authentic"
+        "contemporary", "elegance", "vibrant", "authentic", "perfection"
       ];
 
-      const allTags = Array.from(new Set([...top10, ...secondaryPool])).slice(0, 48);
-      return { title, description, keywords: allTags };
+      const targetCount = parseInt(document.getElementById('configKeywordCount').value) || 48;
+      const allTags = Array.from(new Set([...top10, ...secondaryPool])).slice(0, targetCount);
+      return { title, description, keywords: allTags, category: selectedTheme.category };
     }
 
     function updateBatchUI() {
@@ -1115,24 +1419,24 @@ Key requirements for Adobe Stock:
     function createThumbnailElement(item, index) {
       const isSelected = index === currentActiveIdx;
       const thumb = document.createElement('div');
-      thumb.className = `shrink-0 cursor-pointer p-1 rounded-2xl border transition-all relative ${
-        isSelected ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-500/20 shadow-xs' : 'border-slate-200 bg-white hover:border-slate-300'
+      thumb.className = `shrink-0 cursor-pointer p-1.5 rounded-2xl border transition-all relative ${
+        isSelected ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30 shadow-md' : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
       }`;
 
       let statusBadge = '';
       if (item.status === 'processing') {
-        statusBadge = `<div class="absolute inset-0 bg-blue-950/60 rounded-xl flex items-center justify-center text-white"><i data-lucide="loader-2" class="w-4 h-4 spin-fast"></i></div>`;
+        statusBadge = `<div class="absolute inset-0 bg-blue-950/70 rounded-xl flex items-center justify-center text-white"><i data-lucide="loader-2" class="w-4 h-4 spin-fast"></i></div>`;
       } else if (item.status === 'done') {
-        statusBadge = `<span class="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-xs">✓</span>`;
+        statusBadge = `<span class="absolute top-1.5 right-1.5 w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm">✓</span>`;
       }
 
       thumb.innerHTML = `
-        <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
-          ${item.dataUrl ? `<img src="${item.dataUrl}" class="w-full h-full object-cover" alt="thumb">` : `<i data-lucide="image" class="w-6 h-6 text-slate-300"></i>`}
-          <span class="absolute bottom-1 left-1 bg-black/75 text-[9px] text-white px-1 font-mono rounded">#${index + 1}</span>
+        <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/5">
+          ${item.dataUrl ? `<img src="${item.dataUrl}" class="w-full h-full object-cover" alt="thumb">` : `<i data-lucide="image" class="w-6 h-6 text-slate-600"></i>`}
+          <span class="absolute bottom-1 left-1 bg-black/80 text-[9px] text-white px-1.5 py-0.2 font-mono rounded">#${index + 1}</span>
           ${statusBadge}
         </div>
-        <p class="text-[10px] font-bold text-slate-600 truncate max-w-[64px] text-center mt-1">${item.fileName}</p>
+        <p class="text-[10px] font-bold text-slate-300 truncate max-w-[64px] sm:max-w-[80px] text-center mt-1">${item.fileName}</p>
       `;
 
       thumb.onclick = () => loadActiveItem(index);
@@ -1149,6 +1453,9 @@ Key requirements for Adobe Stock:
       document.getElementById('activeImgFormat').innerText = it.fileType;
       document.getElementById('metaTitleBox').value = it.title || '';
       document.getElementById('metaDescBox').value = it.description || '';
+      document.getElementById('activeCategorySelect').value = it.category || 'Lifestyle';
+      document.getElementById('activeAssetMediumSelect').value = it.medium || 'Photo';
+      document.getElementById('activeReleaseInput').value = it.releases || '';
 
       onTitleChanged();
       onDescChanged();
@@ -1182,8 +1489,8 @@ Key requirements for Adobe Stock:
       prev.disabled = currentActiveIdx <= 0;
       next.disabled = currentActiveIdx >= batchItemList.length - 1;
 
-      prev.classList.toggle('opacity-40', currentActiveIdx <= 0);
-      next.classList.toggle('opacity-40', currentActiveIdx >= batchItemList.length - 1);
+      prev.classList.toggle('opacity-30', currentActiveIdx <= 0);
+      next.classList.toggle('opacity-30', currentActiveIdx >= batchItemList.length - 1);
     }
 
     function deleteActiveItem() {
@@ -1200,7 +1507,33 @@ Key requirements for Adobe Stock:
         currentActiveIdx = batchItemList.length - 1;
       }
       loadActiveItem(currentActiveIdx);
-      showToast(`Removed "${deletedName}" from batch`);
+      showToast(`Removed "${deletedName}"`);
+    }
+
+    function onCategoryChanged() {
+      if (currentActiveIdx >= 0 && batchItemList[currentActiveIdx]) {
+        batchItemList[currentActiveIdx].category = document.getElementById('activeCategorySelect').value;
+      }
+    }
+
+    function onMediumChanged() {
+      if (currentActiveIdx >= 0 && batchItemList[currentActiveIdx]) {
+        batchItemList[currentActiveIdx].medium = document.getElementById('activeAssetMediumSelect').value;
+      }
+    }
+
+    function onReleaseChanged() {
+      if (currentActiveIdx >= 0 && batchItemList[currentActiveIdx]) {
+        batchItemList[currentActiveIdx].releases = document.getElementById('activeReleaseInput').value;
+      }
+    }
+
+    function onAssetTypeDefaultChanged() {
+      const val = document.getElementById('configAssetType').value;
+      if (currentActiveIdx >= 0 && batchItemList[currentActiveIdx]) {
+        batchItemList[currentActiveIdx].medium = val;
+        document.getElementById('activeAssetMediumSelect').value = val;
+      }
     }
 
     function onTitleChanged() {
@@ -1210,19 +1543,18 @@ Key requirements for Adobe Stock:
       counter.innerText = `${len} / 75 chars (Optimal: 55-75)`;
       
       if (len < 55 || len > 75) {
-        counter.classList.add('text-amber-600');
+        counter.classList.add('text-amber-400');
         counter.classList.remove('text-slate-400');
       } else {
-        counter.classList.remove('text-amber-600');
+        counter.classList.remove('text-amber-400');
         counter.classList.add('text-slate-400');
       }
 
-      // Check for forbidden spam words
       const lower = input.value.toLowerCase();
       const detectedSpam = SPAM_WORDS.filter(w => lower.includes(w));
       const spamWarn = document.getElementById('titleSpamWarning');
       if (detectedSpam.length > 0) {
-        document.getElementById('titleSpamWarningText').innerText = `Adobe Stock spam warning: Remove "${detectedSpam.join(', ')}"`;
+        document.getElementById('titleSpamWarningText').innerText = `Microstock spam warning: Remove "${detectedSpam.join(', ')}"`;
         spamWarn.classList.remove('hidden');
       } else {
         spamWarn.classList.add('hidden');
@@ -1251,18 +1583,15 @@ Key requirements for Adobe Stock:
       const item = batchItemList[currentActiveIdx];
       let score = 100;
 
-      // Title length check (55-75 chars optimal)
       const tLen = (item.title || '').length;
       if (tLen < 40) score -= 20;
       else if (tLen < 55 || tLen > 75) score -= 8;
 
-      // Keyword count check (35-49 optimal)
       const kCount = (item.keywords || []).length;
       if (kCount < 20) score -= 25;
       else if (kCount < 35) score -= 10;
       else if (kCount > 49) score -= 5;
 
-      // Spam word penalty
       const lowerTitle = (item.title || '').toLowerCase();
       const hasSpam = SPAM_WORDS.some(w => lowerTitle.includes(w));
       if (hasSpam) score -= 15;
@@ -1270,14 +1599,15 @@ Key requirements for Adobe Stock:
       score = Math.max(20, Math.min(100, score));
 
       const badge = document.getElementById('seoQualityBadge');
-      badge.innerText = `SEO Score: ${score}%`;
+      badge.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5"></i> SEO Score: ${score}%`;
       if (score >= 90) {
-        badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+        badge.className = 'text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1';
       } else if (score >= 75) {
-        badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200';
+        badge.className = 'text-xs font-black px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1';
       } else {
-        badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
+        badge.className = 'text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1';
       }
+      lucide.createIcons();
     }
 
     function renderTagPills() {
@@ -1290,36 +1620,34 @@ Key requirements for Adobe Stock:
       box.innerHTML = '';
       badge.innerText = `${item.keywords.length} / 48 tags`;
 
-      // Color coding based on ideal tag count
       if (item.keywords.length >= 35 && item.keywords.length <= 49) {
-        badge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+        badge.className = 'text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
       } else if (item.keywords.length > 49) {
-        badge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+        badge.className = 'text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
       } else {
-        badge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
+        badge.className = 'text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20';
       }
 
       item.keywords.forEach((tag, idx) => {
         const isTop10 = idx < 10;
         const pill = document.createElement('span');
-        pill.className = `group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold shadow-2xs transition ${
+        pill.className = `group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
           isTop10 
-            ? 'bg-blue-50 text-blue-700 border border-blue-200 ring-1 ring-blue-500/20' 
-            : 'bg-white border border-slate-200/90 text-slate-700 hover:border-slate-300'
+            ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30 ring-1 ring-blue-500/20 shadow-xs' 
+            : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-slate-700'
         }`;
         
-        // Promote button if not already in top position
         const promoteBtn = idx > 0 ? `
-          <button onclick="moveTagUp(${idx})" title="Promote higher in rank" class="text-slate-300 group-hover:text-blue-600 hover:scale-110 transition">
+          <button onclick="moveTagUp(${idx})" title="Promote higher in rank" class="text-slate-500 group-hover:text-blue-400 hover:scale-125 transition">
             ▲
           </button>
         ` : '';
 
         pill.innerHTML = `
-          <span class="${isTop10 ? 'text-[10px] font-black text-blue-500' : 'text-[10px] text-slate-400'}">#${idx + 1}</span>
+          <span class="${isTop10 ? 'text-[10px] font-black text-blue-400' : 'text-[10px] text-slate-500'}">#${idx + 1}</span>
           <span>${tag}</span>
           ${promoteBtn}
-          <button onclick="removeSingleTag(${idx})" title="Remove keyword" class="text-slate-400 group-hover:text-rose-500 font-bold hover:scale-125 transition ml-0.5">
+          <button onclick="removeSingleTag(${idx})" title="Remove keyword" class="text-slate-500 group-hover:text-rose-400 font-bold hover:scale-125 transition ml-0.5">
             &times;
           </button>
         `;
@@ -1349,7 +1677,6 @@ Key requirements for Adobe Stock:
       const rawVal = input.value.trim();
       if (!rawVal || currentActiveIdx < 0) return;
 
-      // Handle comma-separated list of tags
       const splitTags = rawVal.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 1);
       if (splitTags.length === 0) return;
 
@@ -1373,7 +1700,7 @@ Key requirements for Adobe Stock:
       if (addedCount > 0) {
         showToast(addToTop ? `Added to Top 10 rankings` : `Added ${addedCount} keyword(s)`);
       } else {
-        showToast('Keywords already present in list');
+        showToast('Keywords already present');
       }
     }
 
@@ -1382,7 +1709,7 @@ Key requirements for Adobe Stock:
       batchItemList[currentActiveIdx].keywords = [];
       renderTagPills();
       updateSeoQualityScore();
-      showToast('All keywords cleared for this image');
+      showToast('All keywords cleared');
     }
 
     function clearEntireBatch() {
@@ -1393,31 +1720,33 @@ Key requirements for Adobe Stock:
       showToast('Batch queue cleared');
     }
 
-    function openApplyToAllModal() {
+    // Bulk Tools Modal Functions
+    function openBulkToolsModal() {
       if (batchItemList.length === 0) {
-        showToast('No images in queue');
+        showToast('Please upload images first');
         return;
       }
-      document.getElementById('applyAllCountText').innerText = batchItemList.length;
-      document.getElementById('applyAllTagsInput').value = '';
-      document.getElementById('applyAllModal').classList.remove('hidden');
+      document.getElementById('bulkModalCountText').innerText = batchItemList.length;
+      document.getElementById('bulkAddKeywordsInput').value = '';
+      document.getElementById('bulkRemoveKeywordInput').value = '';
+      document.getElementById('bulkToolsModal').classList.remove('hidden');
+      lucide.createIcons();
     }
 
-    function closeApplyToAllModal() {
-      document.getElementById('applyAllModal').classList.add('hidden');
+    function closeBulkToolsModal() {
+      document.getElementById('bulkToolsModal').classList.add('hidden');
     }
 
-    function executeApplyToAll() {
-      const input = document.getElementById('applyAllTagsInput');
-      const asTop = document.getElementById('applyAsTop10Check').checked;
-      const rawVal = input.value.trim();
-      if (!rawVal) return;
+    function executeBulkAddKeywords() {
+      const val = document.getElementById('bulkAddKeywordsInput').value.trim();
+      const asTop = document.getElementById('bulkTop10Check').checked;
+      if (!val) return;
 
-      const newTags = rawVal.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 1);
-      if (newTags.length === 0) return;
+      const tags = val.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 1);
+      if (tags.length === 0) return;
 
       batchItemList.forEach(item => {
-        newTags.forEach(t => {
+        tags.forEach(t => {
           if (!item.keywords.includes(t)) {
             if (asTop) item.keywords.unshift(t);
             else item.keywords.push(t);
@@ -1425,12 +1754,40 @@ Key requirements for Adobe Stock:
         });
       });
 
-      closeApplyToAllModal();
       if (currentActiveIdx >= 0) {
         renderTagPills();
         updateSeoQualityScore();
       }
-      showToast(`Applied ${newTags.length} tag(s) to all ${batchItemList.length} images!`);
+      closeBulkToolsModal();
+      showToast(`Added tags to all ${batchItemList.length} assets!`);
+    }
+
+    function executeBulkCategory() {
+      const cat = document.getElementById('bulkCategorySelect').value;
+      batchItemList.forEach(item => {
+        item.category = cat;
+      });
+      if (currentActiveIdx >= 0) {
+        document.getElementById('activeCategorySelect').value = cat;
+      }
+      closeBulkToolsModal();
+      showToast(`Updated category to "${cat}" across all images!`);
+    }
+
+    function executeBulkRemoveKeyword() {
+      const target = document.getElementById('bulkRemoveKeywordInput').value.trim().toLowerCase();
+      if (!target) return;
+
+      batchItemList.forEach(item => {
+        item.keywords = item.keywords.filter(t => t.toLowerCase() !== target);
+      });
+
+      if (currentActiveIdx >= 0) {
+        renderTagPills();
+        updateSeoQualityScore();
+      }
+      closeBulkToolsModal();
+      showToast(`Removed "${target}" from all images`);
     }
 
     function openImageZoomModal() {
@@ -1465,22 +1822,24 @@ Key requirements for Adobe Stock:
       const it = batchItemList[currentActiveIdx];
       const tags = `"${it.keywords.join(', ')}"`;
       const title = `"${(it.title || '').replace(/"/g, '""')}"`;
-      const row = `"${it.fileName}",${title},${tags},"",""\n`;
+      const cat = `"${it.category || 'Lifestyle'}"`;
+      const rel = `"${(it.releases || '').replace(/"/g, '""')}"`;
+      const row = `"${it.fileName}",${title},${tags},${cat},${rel}\n`;
       clipboardSafeCopy(row);
-      showToast('Adobe Stock CSV Row copied!');
+      showToast('CSV Row copied!');
     }
 
     function copyAllCsvToClipboard() {
       if (batchItemList.length === 0) {
-        showToast('No images to copy');
+        showToast('No assets to copy');
         return;
       }
       let csv = "Filename,Title,Keywords,Category,Releases\n";
       batchItemList.forEach(it => {
-        csv += `"${it.fileName}","${(it.title || '').replace(/"/g, '""')}","${(it.keywords || []).join(', ')}","",""\n`;
+        csv += `"${it.fileName}","${(it.title || '').replace(/"/g, '""')}","${(it.keywords || []).join(', ')}","${it.category || 'Lifestyle'}","${(it.releases || '').replace(/"/g, '""')}"\n`;
       });
       clipboardSafeCopy(csv);
-      showToast(`Copied all ${batchItemList.length} CSV rows to clipboard!`);
+      showToast(`Copied all ${batchItemList.length} rows to clipboard!`);
     }
 
     async function clipboardSafeCopy(text) {
@@ -1488,9 +1847,7 @@ Key requirements for Adobe Stock:
         try {
           await navigator.clipboard.writeText(text);
           return;
-        } catch (e) {
-          // fallback to execCommand below
-        }
+        } catch (e) {}
       }
       const ta = document.createElement("textarea");
       ta.value = text;
@@ -1502,9 +1859,7 @@ Key requirements for Adobe Stock:
       ta.select();
       try {
         document.execCommand('copy');
-      } catch (err) {
-        console.error("Clipboard error", err);
-      }
+      } catch (err) {}
       ta.remove();
     }
 
@@ -1524,21 +1879,24 @@ Key requirements for Adobe Stock:
         item.title = meta.title || item.title;
         item.description = meta.description || item.description;
         item.keywords = meta.keywords && meta.keywords.length > 0 ? meta.keywords : item.keywords;
+        item.category = meta.category || item.category;
         loadActiveItem(currentActiveIdx);
-        showToast('Updated with fresh SEO metadata!');
+        showToast('Updated with fresh metadata!');
       } catch (e) {
         const fallback = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1);
         item.title = fallback.title;
         item.description = fallback.description;
         item.keywords = fallback.keywords;
+        item.category = fallback.category || item.category;
         loadActiveItem(currentActiveIdx);
         showToast('Updated with distinct SEO metadata');
       }
     }
 
+    // Platform-Specific CSV Downloads
     function downloadAdobeStockCsv() {
       if (batchItemList.length === 0) {
-        showToast('Upload images first to export CSV');
+        showToast('Upload images first');
         return;
       }
 
@@ -1547,7 +1905,9 @@ Key requirements for Adobe Stock:
         const fn = `"${it.fileName}"`;
         const title = `"${(it.title || '').replace(/"/g, '""')}"`;
         const kw = `"${(it.keywords || []).join(', ')}"`;
-        csv += `${fn},${title},${kw},"",""\n`;
+        const cat = `"${it.category || 'Lifestyle'}"`;
+        const rel = `"${(it.releases || '').replace(/"/g, '""')}"`;
+        csv += `${fn},${title},${kw},${cat},${rel}\n`;
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -1557,7 +1917,7 @@ Key requirements for Adobe Stock:
 
     function downloadShutterstockCsv() {
       if (batchItemList.length === 0) {
-        showToast('Upload images first to export CSV');
+        showToast('Upload images first');
         return;
       }
 
@@ -1566,7 +1926,8 @@ Key requirements for Adobe Stock:
         const fn = `"${it.fileName}"`;
         const desc = `"${(it.description || it.title || '').replace(/"/g, '""')}"`;
         const kw = `"${(it.keywords || []).join(', ')}"`;
-        csv += `${fn},${desc},${kw},"General"\n`;
+        const cat = `"${it.category || 'Lifestyle'}"`;
+        csv += `${fn},${desc},${kw},${cat}\n`;
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -1574,9 +1935,28 @@ Key requirements for Adobe Stock:
       showToast('Shutterstock CSV Downloaded!');
     }
 
-    function downloadUniversalCsv() {
+    function downloadFreepikCsv() {
       if (batchItemList.length === 0) {
-        showToast('Upload images first to export CSV');
+        showToast('Upload images first');
+        return;
+      }
+
+      let csv = "Filename,Title,Keywords\n";
+      batchItemList.forEach(it => {
+        const fn = `"${it.fileName}"`;
+        const title = `"${(it.title || '').replace(/"/g, '""')}"`;
+        const kw = `"${(it.keywords || []).join(', ')}"`;
+        csv += `${fn},${title},${kw}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      saveAs(blob, `freepik_metadata_${Date.now()}.csv`);
+      showToast('Freepik CSV Downloaded!');
+    }
+
+    function downloadVecteezyCsv() {
+      if (batchItemList.length === 0) {
+        showToast('Upload images first');
         return;
       }
 
@@ -1590,6 +1970,29 @@ Key requirements for Adobe Stock:
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      saveAs(blob, `vecteezy_metadata_${Date.now()}.csv`);
+      showToast('Vecteezy CSV Downloaded!');
+    }
+
+    function downloadUniversalCsv() {
+      if (batchItemList.length === 0) {
+        showToast('Upload images first');
+        return;
+      }
+
+      let csv = "Filename,Title,Description,Keywords,Category,Medium,Releases\n";
+      batchItemList.forEach(it => {
+        const fn = `"${it.fileName}"`;
+        const title = `"${(it.title || '').replace(/"/g, '""')}"`;
+        const desc = `"${(it.description || '').replace(/"/g, '""')}"`;
+        const kw = `"${(it.keywords || []).join(', ')}"`;
+        const cat = `"${it.category || 'Lifestyle'}"`;
+        const med = `"${it.medium || 'Photo'}"`;
+        const rel = `"${(it.releases || '').replace(/"/g, '""')}"`;
+        csv += `${fn},${title},${desc},${kw},${cat},${med},${rel}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       saveAs(blob, `universal_stock_metadata_${Date.now()}.csv`);
       showToast('Universal Microstock CSV Downloaded!');
     }
@@ -1597,7 +2000,6 @@ Key requirements for Adobe Stock:
     function downloadProjectZip() {
       const zip = new JSZip();
       
-      // Clean HTML without dynamic in-memory mutations
       fetch(window.location.href)
         .then(res => res.text())
         .then(html => {
@@ -1613,7 +2015,7 @@ Key requirements for Adobe Stock:
         if (batchItemList.length > 0) {
           let csv = "Filename,Title,Keywords,Category,Releases\n";
           batchItemList.forEach(it => {
-            csv += `"${it.fileName}","${(it.title || '').replace(/"/g, '""')}","${(it.keywords || []).join(', ')}","",""\n`;
+            csv += `"${it.fileName}","${(it.title || '').replace(/"/g, '""')}","${(it.keywords || []).join(', ')}","${it.category || 'Lifestyle'}","${(it.releases || '').replace(/"/g, '""')}"\n`;
           });
           zip.file("adobe_stock_batch_export.csv", csv);
         }
