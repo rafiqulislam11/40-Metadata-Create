@@ -76,6 +76,13 @@ A professional, high-throughput microstock SEO metadata suite inspired by [PixCr
 - Sleek dark theme by default (`#080c14` with glassmorphism and neon accents).
 - Single-click Sun/Moon toggle for light mode.
 
+### 10. 🎙️ Two-Way Real-Time Voice Conversation (Live Voice Mode)
+- **ChatGPT & Gemini-style Voice Session**: Talk directly with any AI model using your microphone in English or বাংলা (Bengali).
+- **Web Speech STT (Speech-to-Text)**: Live real-time speech transcription with animated 7-bar audio frequency visualizer and pulsing orb.
+- **Dynamic Language Switcher**: Single click toggle between **বাংলা (BN - `bn-BD`)** and **English (EN - `en-US`)**.
+- **Auto-Silence & Send**: Speaks, detects silence pause, automatically sends query to model, and retrieves insights.
+- **SpeechSynthesis TTS (Text-to-Speech)**: The model speaks back aloud automatically! Includes **🔊 Read Aloud** and **⏹ Stop Speaking** buttons on every chat response bubble.
+
 ---
 
 ## 🚀 Quick Start
