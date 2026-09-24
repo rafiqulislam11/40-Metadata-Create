@@ -285,25 +285,124 @@
           <!-- Right Model Selector + Microphone Icon -->
           <div class="flex items-center gap-1 sm:gap-2">
             <!-- Model Dropdown Pill -->
-            <div class="relative">
-              <button onclick="toggleModelDropdown()" id="modelSelectPill" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 text-xs font-semibold text-slate-700 border border-transparent hover:border-slate-200 transition">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-600"></i>
-                <span id="activeModelLabel">Gemini 3.8 Flash</span>
+            <div class="relative" id="modelSelectContainer">
+              <button onclick="toggleModelDropdown(event)" id="modelSelectPill" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-slate-100 text-xs font-semibold text-slate-700 border border-transparent hover:border-slate-200 transition">
+                <span id="activeModelIcon" class="flex items-center justify-center shrink-0"></span>
+                <span id="activeModelLabel">ChatGPT</span>
                 <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
               </button>
 
-              <div id="modelDropdownList" class="hidden absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 z-50 text-xs font-semibold text-slate-700">
-                <button onclick="selectAiModel('Gemini 3.8 Flash')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between">
-                  <span>Gemini 3.8 Flash</span>
-                  <span class="text-[10px] text-emerald-600 font-bold">Latest SOTA</span>
+              <!-- Main Model Menu (Opens Upward matching PixcraftAI) -->
+              <div id="modelDropdownList" class="hidden absolute right-0 bottom-full mb-2 w-48 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/80 p-1.5 z-50 text-xs font-semibold text-slate-700 select-none">
+                <!-- ChatGPT -->
+                <button onclick="selectAiModel('ChatGPT')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between transition group">
+                  <div class="flex items-center gap-2.5">
+                    <svg class="w-4 h-4 text-slate-900 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M22.28 9.82a5.98 5.98 0 0 0-.52-4.91 6.05 6.05 0 0 0-6.51-2.9A6.07 6.07 0 0 0 4.98 4.18a5.98 5.98 0 0 0-4 2.9 6.05 6.05 0 0 0 .74 7.1 5.98 5.98 0 0 0 .51 4.91 6.05 6.05 0 0 0 6.51 2.9A5.98 5.98 0 0 0 13.26 24a6.06 6.06 0 0 0 5.77-4.21 5.99 5.99 0 0 0 4-2.9 6.06 6.06 0 0 0-.75-7.07zm-9.02 12.6a4.48 4.48 0 0 1-2.88-1.04l.14-.08 4.78-2.76a.79.79 0 0 0 .39-.68v-6.74l2.02 1.17a.07.07 0 0 1 .04.05v5.58a4.5 4.5 0 0 1-4.49 4.5zm-9.66-4.52a4.47 4.47 0 0 1-.53-3.02l.14.09 4.78 2.76a.77.77 0 0 0 .78 0l5.85-3.37v2.33a.08.08 0 0 1-.04.06L9.74 19.95a4.5 4.5 0 0 1-6.14-2.05zM2.34 8.73a4.47 4.47 0 0 1 2.37-1.98v.17l.0001 5.51a.78.78 0 0 0 .39.68l5.84 3.37-2.02 1.17a.08.08 0 0 1-.07 0l-4.83-2.79A4.5 4.5 0 0 1 2.34 8.73zm16.6-1.52-5.84 3.37-2.02-1.16a.08.08 0 0 1-.04-.06V3.78a4.5 4.5 0 0 1 7.9-1.98zm2.34 7.07a4.47 4.47 0 0 1-2.37 1.98v-5.68a.79.79 0 0 0-.39-.68L12.68 6.53l2.02-1.17a.08.08 0 0 1 .07 0l4.83 2.79a4.5 4.5 0 0 1 1.74 6.12zM9.55 13.57l2.45-1.42 2.45 1.42v2.83l-2.45 1.41-2.45-1.41z"/>
+                    </svg>
+                    <span>ChatGPT</span>
+                  </div>
                 </button>
-                <button onclick="selectAiModel('GPT-5')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between">
-                  <span>GPT-5</span>
-                  <span class="text-[10px] text-blue-600 font-bold">AI</span>
+
+                <!-- Gemini (with lock) -->
+                <button onclick="selectAiModel('Gemini')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between transition group">
+                  <div class="flex items-center gap-2.5">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">
+                      <defs>
+                        <linearGradient id="geminiGradDropdown" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#38bdf8"/>
+                          <stop offset="50%" stop-color="#818cf8"/>
+                          <stop offset="100%" stop-color="#ec4899"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="url(#geminiGradDropdown)"/>
+                    </svg>
+                    <span>Gemini</span>
+                  </div>
+                  <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400 stroke-[1.6]"></i>
                 </button>
-                <button onclick="selectAiModel('Claude 3.7 Sonnet')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between">
-                  <span>Claude 3.7</span>
+
+                <!-- Claude (with lock) -->
+                <button onclick="selectAiModel('Claude')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between transition group">
+                  <div class="flex items-center gap-2.5">
+                    <svg class="w-4 h-4 shrink-0 text-[#cc785c]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2a1.2 1.2 0 0 1 1.2 1.2v3.6a1.2 1.2 0 0 1-2.4 0V3.2A1.2 1.2 0 0 1 12 2zm0 15.2a1.2 1.2 0 0 1 1.2 1.2v3.6a1.2 1.2 0 0 1-2.4 0v-3.6a1.2 1.2 0 0 1 1.2-1.2zm8.8-6a1.2 1.2 0 0 1 1.2 1.2 1.2 1.2 0 0 1-1.2 1.2h-3.6a1.2 1.2 0 0 1 0-2.4h3.6zm-15.2 0a1.2 1.2 0 0 1 1.2 1.2 1.2 1.2 0 0 1-1.2 1.2H2a1.2 1.2 0 0 1 0-2.4h3.6zm12.6 6.4a1.2 1.2 0 0 1 1.7 1.7l-2.6 2.6a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6zM6.6 6.6a1.2 1.2 0 0 1 1.7 1.7L5.7 10.9a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6zm11.6-1.7a1.2 1.2 0 0 1 1.7 1.7l-2.6 2.6a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6zM5.7 15.7a1.2 1.2 0 0 1 1.7 1.7l-2.6 2.6a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6z"/>
+                      <circle cx="12" cy="12" r="3" fill="#cc785c"/>
+                    </svg>
+                    <span>Claude</span>
+                  </div>
+                  <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400 stroke-[1.6]"></i>
                 </button>
+
+                <!-- Grok (with lock) -->
+                <button onclick="selectAiModel('Grok')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between transition group">
+                  <div class="flex items-center gap-2.5">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">
+                      <rect width="24" height="24" rx="6" fill="#18181b"/>
+                      <path d="M7 17L17 7M7 7h3l7 10h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Grok</span>
+                  </div>
+                  <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400 stroke-[1.6]"></i>
+                </button>
+
+                <!-- More models > (Opens Submenu) -->
+                <div class="relative group/more" onmouseenter="showMoreModelsSubmenu()" onmouseleave="scheduleHideMoreModelsSubmenu()">
+                  <button type="button" onclick="toggleMoreModelsSubmenu(event)" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between transition text-slate-700">
+                    <span class="text-slate-700 font-medium">More models</span>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                  </button>
+
+                  <!-- Flyout Submenu -->
+                  <div id="moreModelsSubmenu" class="hidden absolute sm:left-full sm:bottom-0 sm:ml-1.5 max-sm:right-0 max-sm:bottom-full max-sm:mb-1 w-44 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/80 p-1.5 z-50 text-xs font-semibold text-slate-700">
+                    <!-- Perplexity -->
+                    <button onclick="selectAiModel('Perplexity')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2.5 transition">
+                      <svg class="w-4 h-4 shrink-0 text-[#20b2aa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/>
+                        <rect x="8" y="8" width="8" height="8" rx="2" fill="#20b2aa" fill-opacity="0.2" stroke="currentColor"/>
+                      </svg>
+                      <span>Perplexity</span>
+                    </button>
+
+                    <!-- DeepSeek -->
+                    <button onclick="selectAiModel('DeepSeek')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2.5 transition">
+                      <svg class="w-4 h-4 shrink-0 text-[#1e40af]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3.2 13.6c1.6-4.2 5.8-7.8 11.2-7.8 5.3 0 7.8 3.7 7.8 3.7s-2.1 5.3-6.3 6.8c-3.2 1.2-6.8.5-8.9-.5l-3.8-2.2z"/>
+                        <circle cx="16.8" cy="8.4" r="1.3" fill="#ffffff"/>
+                        <path d="M14.5 16.2c2.1 1.1 5.2 1.6 7.3 1" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/>
+                      </svg>
+                      <span>DeepSeek</span>
+                    </button>
+
+                    <!-- Llama -->
+                    <button onclick="selectAiModel('Llama')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2.5 transition">
+                      <svg class="w-4 h-4 shrink-0 text-[#0064e0]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.2 4.8C14.7 4.8 12.8 6.5 12 7.7 11.2 6.5 9.3 4.8 6.8 4.8 3.5 4.8 1 7.5 1 11.2c0 4.8 4.6 9 10.3 12.4.4.2 1 .2 1.4 0 5.7-3.4 10.3-7.6 10.3-12.4 0-3.7-2.5-6.4-5.8-6.4zm-9 11.4c-2.4 0-4.3-1.9-4.3-4.3 0-2.4 1.9-4.3 4.3-4.3 1.9 0 3.5 1.3 4 3-.5 1.7-2.1 3-4 3zm7.6 0c-1.9 0-3.5-1.3-4-3 .5-1.7 2.1-3 4-3 2.4 0 4.3 1.9 4.3 4.3 0 2.4-1.9 4.3-4.3 4.3z"/>
+                      </svg>
+                      <span>Llama</span>
+                    </button>
+
+                    <!-- Qwen -->
+                    <button onclick="selectAiModel('Qwen')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2.5 transition">
+                      <svg class="w-4 h-4 shrink-0 text-[#7c3aed]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l8.5 4.9v9.8L12 21.6 3.5 16.7V6.9L12 2zm0 3.2L6.1 8.6l5.9 3.4 5.9-3.4L12 5.2zm-6.5 5.5v5.8L11 19.6v-5.8L5.5 10.7zm13 0l-5.5 3.1v5.8l5.5-3.1v-5.8z"/>
+                      </svg>
+                      <span>Qwen</span>
+                    </button>
+
+                    <!-- Mistral -->
+                    <button onclick="selectAiModel('Mistral')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center gap-2.5 transition">
+                      <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="16" width="3.8" height="4.5" fill="#f97316"/>
+                        <rect x="7.8" y="12" width="3.8" height="8.5" fill="#ea580c"/>
+                        <rect x="12.6" y="8" width="3.8" height="12.5" fill="#c2410c"/>
+                        <rect x="17.4" y="3.5" width="3.8" height="17" fill="#9a3412"/>
+                      </svg>
+                      <span>Mistral</span>
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -953,7 +1052,10 @@
         <div>
           <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Select Vision Model</label>
           <select id="modelSelectBox" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 outline-none">
-            <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Latest Update - SOTA Vision)</option>
+            <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Latest 2026 - Fast & SOTA)</option>
+            <option value="gpt-5-vision">ChatGPT GPT-5 Vision Engine</option>
+            <option value="claude-3-7-sonnet">Claude 3.7 Sonnet Multimodal</option>
+            <option value="deepseek-r1-vision">DeepSeek R1 Visual Reasoning</option>
             <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
             <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
           </select>
@@ -1043,7 +1145,11 @@
       selectedModel = "gemini-3.8-flash";
       localStorage.setItem('pixcraft_selected_model', selectedModel);
     }
-    let activeModel = localStorage.getItem('pixcraft_hub_model') || "Gemini 3.8 Flash";
+    let activeModel = localStorage.getItem('pixcraft_hub_model');
+    if (!activeModel || !['ChatGPT', 'Gemini', 'Claude', 'Grok', 'Perplexity', 'DeepSeek', 'Llama', 'Qwen', 'Mistral'].includes(activeModel)) {
+      activeModel = "ChatGPT";
+      localStorage.setItem('pixcraft_hub_model', activeModel);
+    }
     let savedCredits = localStorage.getItem('pixcraft_credits');
     let credits = (!savedCredits || parseInt(savedCredits) < 5000) ? 5000 : parseInt(savedCredits);
     localStorage.setItem('pixcraft_credits', credits);
@@ -1094,11 +1200,11 @@
     };
 
     window.addEventListener('DOMContentLoaded', () => {
+      updateModelPill(activeModel);
       lucide.createIcons();
       updateCreditsDisplay();
       initDragAndDrop();
       initKeyboardShortcuts();
-      document.getElementById('activeModelLabel').innerText = activeModel;
       document.getElementById('modelSelectBox').value = selectedModel;
     });
 
@@ -1140,17 +1246,123 @@
       document.getElementById('profileDropdownMenu').classList.toggle('hidden');
     }
 
-    function toggleModelDropdown() {
-      document.getElementById('modelDropdownList').classList.toggle('hidden');
+    const MODEL_CONFIGS = {
+      'ChatGPT': {
+        name: 'ChatGPT',
+        badge: 'OpenAI GPT-4o / GPT-5',
+        icon: `<svg class="w-3.5 h-3.5 text-slate-900 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M22.28 9.82a5.98 5.98 0 0 0-.52-4.91 6.05 6.05 0 0 0-6.51-2.9A6.07 6.07 0 0 0 4.98 4.18a5.98 5.98 0 0 0-4 2.9 6.05 6.05 0 0 0 .74 7.1 5.98 5.98 0 0 0 .51 4.91 6.05 6.05 0 0 0 6.51 2.9A5.98 5.98 0 0 0 13.26 24a6.06 6.06 0 0 0 5.77-4.21 5.99 5.99 0 0 0 4-2.9 6.06 6.06 0 0 0-.75-7.07zm-9.02 12.6a4.48 4.48 0 0 1-2.88-1.04l.14-.08 4.78-2.76a.79.79 0 0 0 .39-.68v-6.74l2.02 1.17a.07.07 0 0 1 .04.05v5.58a4.5 4.5 0 0 1-4.49 4.5zm-9.66-4.52a4.47 4.47 0 0 1-.53-3.02l.14.09 4.78 2.76a.77.77 0 0 0 .78 0l5.85-3.37v2.33a.08.08 0 0 1-.04.06L9.74 19.95a4.5 4.5 0 0 1-6.14-2.05zM2.34 8.73a4.47 4.47 0 0 1 2.37-1.98v.17l.0001 5.51a.78.78 0 0 0 .39.68l5.84 3.37-2.02 1.17a.08.08 0 0 1-.07 0l-4.83-2.79A4.5 4.5 0 0 1 2.34 8.73zm16.6-1.52-5.84 3.37-2.02-1.16a.08.08 0 0 1-.04-.06V3.78a4.5 4.5 0 0 1 7.9-1.98zm2.34 7.07a4.47 4.47 0 0 1-2.37 1.98v-5.68a.79.79 0 0 0-.39-.68L12.68 6.53l2.02-1.17a.08.08 0 0 1 .07 0l4.83 2.79a4.5 4.5 0 0 1 1.74 6.12zM9.55 13.57l2.45-1.42 2.45 1.42v2.83l-2.45 1.41-2.45-1.41z"/></svg>`
+      },
+      'Gemini': {
+        name: 'Gemini',
+        badge: 'Google Gemini 3.8 Flash',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="geminiGradPill" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="50%" stop-color="#818cf8"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="url(#geminiGradPill)"/></svg>`
+      },
+      'Claude': {
+        name: 'Claude',
+        badge: 'Anthropic Claude 3.7',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0 text-[#cc785c]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1.2 1.2 0 0 1 1.2 1.2v3.6a1.2 1.2 0 0 1-2.4 0V3.2A1.2 1.2 0 0 1 12 2zm0 15.2a1.2 1.2 0 0 1 1.2 1.2v3.6a1.2 1.2 0 0 1-2.4 0v-3.6a1.2 1.2 0 0 1 1.2-1.2zm8.8-6a1.2 1.2 0 0 1 1.2 1.2 1.2 1.2 0 0 1-1.2 1.2h-3.6a1.2 1.2 0 0 1 0-2.4h3.6zm-15.2 0a1.2 1.2 0 0 1 1.2 1.2 1.2 1.2 0 0 1-1.2 1.2H2a1.2 1.2 0 0 1 0-2.4h3.6zm12.6 6.4a1.2 1.2 0 0 1 1.7 1.7l-2.6 2.6a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6zM6.6 6.6a1.2 1.2 0 0 1 1.7 1.7L5.7 10.9a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6zm11.6-1.7a1.2 1.2 0 0 1 1.7 1.7l-2.6 2.6a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6zM5.7 15.7a1.2 1.2 0 0 1 1.7 1.7l-2.6 2.6a1.2 1.2 0 0 1-1.7-1.7l2.6-2.6z"/><circle cx="12" cy="12" r="3" fill="#cc785c"/></svg>`
+      },
+      'Grok': {
+        name: 'Grok',
+        badge: 'xAI Grok 3',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#18181b"/><path d="M7 17L17 7M7 7h3l7 10h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      },
+      'Perplexity': {
+        name: 'Perplexity',
+        badge: 'Perplexity Sonar',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0 text-[#20b2aa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/><rect x="8" y="8" width="8" height="8" rx="2" fill="#20b2aa" fill-opacity="0.2" stroke="currentColor"/></svg>`
+      },
+      'DeepSeek': {
+        name: 'DeepSeek',
+        badge: 'DeepSeek R1',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0 text-[#1e40af]" viewBox="0 0 24 24" fill="currentColor"><path d="M3.2 13.6c1.6-4.2 5.8-7.8 11.2-7.8 5.3 0 7.8 3.7 7.8 3.7s-2.1 5.3-6.3 6.8c-3.2 1.2-6.8.5-8.9-.5l-3.8-2.2z"/><circle cx="16.8" cy="8.4" r="1.3" fill="#ffffff"/><path d="M14.5 16.2c2.1 1.1 5.2 1.6 7.3 1" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/></svg>`
+      },
+      'Llama': {
+        name: 'Llama',
+        badge: 'Meta Llama 3.3',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0 text-[#0064e0]" viewBox="0 0 24 24" fill="currentColor"><path d="M17.2 4.8C14.7 4.8 12.8 6.5 12 7.7 11.2 6.5 9.3 4.8 6.8 4.8 3.5 4.8 1 7.5 1 11.2c0 4.8 4.6 9 10.3 12.4.4.2 1 .2 1.4 0 5.7-3.4 10.3-7.6 10.3-12.4 0-3.7-2.5-6.4-5.8-6.4zm-9 11.4c-2.4 0-4.3-1.9-4.3-4.3 0-2.4 1.9-4.3 4.3-4.3 1.9 0 3.5 1.3 4 3-.5 1.7-2.1 3-4 3zm7.6 0c-1.9 0-3.5-1.3-4-3 .5-1.7 2.1-3 4-3 2.4 0 4.3 1.9 4.3 4.3 0 2.4-1.9 4.3-4.3 4.3z"/></svg>`
+      },
+      'Qwen': {
+        name: 'Qwen',
+        badge: 'Alibaba Qwen 2.5',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0 text-[#7c3aed]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8.5 4.9v9.8L12 21.6 3.5 16.7V6.9L12 2zm0 3.2L6.1 8.6l5.9 3.4 5.9-3.4L12 5.2zm-6.5 5.5v5.8L11 19.6v-5.8L5.5 10.7zm13 0l-5.5 3.1v5.8l5.5-3.1v-5.8z"/></svg>`
+      },
+      'Mistral': {
+        name: 'Mistral',
+        badge: 'Mistral Large 2',
+        icon: `<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none"><rect x="3" y="16" width="3.8" height="4.5" fill="#f97316"/><rect x="7.8" y="12" width="3.8" height="8.5" fill="#ea580c"/><rect x="12.6" y="8" width="3.8" height="12.5" fill="#c2410c"/><rect x="17.4" y="3.5" width="3.8" height="17" fill="#9a3412"/></svg>`
+      }
+    };
+
+    function updateModelPill(name) {
+      const cfg = MODEL_CONFIGS[name] || MODEL_CONFIGS['ChatGPT'];
+      const iconEl = document.getElementById('activeModelIcon');
+      const labelEl = document.getElementById('activeModelLabel');
+      if (iconEl) iconEl.innerHTML = cfg.icon;
+      if (labelEl) labelEl.innerText = cfg.name;
+    }
+
+    function toggleModelDropdown(e) {
+      if (e) e.stopPropagation();
+      const list = document.getElementById('modelDropdownList');
+      const isHidden = list.classList.contains('hidden');
+      if (isHidden) {
+        list.classList.remove('hidden');
+      } else {
+        list.classList.add('hidden');
+        const sub = document.getElementById('moreModelsSubmenu');
+        if (sub) sub.classList.add('hidden');
+      }
+    }
+
+    let moreModelsTimer = null;
+    function showMoreModelsSubmenu() {
+      clearTimeout(moreModelsTimer);
+      const sub = document.getElementById('moreModelsSubmenu');
+      if (sub) sub.classList.remove('hidden');
+    }
+
+    function scheduleHideMoreModelsSubmenu() {
+      moreModelsTimer = setTimeout(() => {
+        const sub = document.getElementById('moreModelsSubmenu');
+        if (sub) sub.classList.add('hidden');
+      }, 250);
+    }
+
+    function toggleMoreModelsSubmenu(e) {
+      if (e) e.stopPropagation();
+      const sub = document.getElementById('moreModelsSubmenu');
+      if (sub) sub.classList.toggle('hidden');
     }
 
     function selectAiModel(name) {
+      if (!MODEL_CONFIGS[name]) name = 'ChatGPT';
       activeModel = name;
       localStorage.setItem('pixcraft_hub_model', name);
-      document.getElementById('activeModelLabel').innerText = name;
-      document.getElementById('modelDropdownList').classList.add('hidden');
-      showToast(`AI Model set to ${name}`);
+      updateModelPill(name);
+      
+      const menu = document.getElementById('modelDropdownList');
+      const sub = document.getElementById('moreModelsSubmenu');
+      if (menu) menu.classList.add('hidden');
+      if (sub) sub.classList.add('hidden');
+      
+      const isLocked = ['Gemini', 'Claude', 'Grok'].includes(name);
+      if (isLocked) {
+        showToast(`✨ ${name} Unlocked with 5000 Pro Credits!`);
+      } else {
+        showToast(`AI Model set to ${name}`);
+      }
     }
+
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('modelSelectContainer');
+      if (container && !container.contains(e.target)) {
+        const menu = document.getElementById('modelDropdownList');
+        const sub = document.getElementById('moreModelsSubmenu');
+        if (menu) menu.classList.add('hidden');
+        if (sub) sub.classList.add('hidden');
+      }
+    });
 
     function toggleVoiceInput() {
       showToast('Listening... Speak your prompt or idea.');
@@ -1202,11 +1414,24 @@
       const text = document.getElementById('assistantResponseText');
 
       card.classList.remove('hidden');
-      text.innerText = `Thinking with ${activeModel}... Analyzing "${query}"`;
+      text.innerHTML = `<span class="inline-flex items-center gap-2 text-slate-500 font-medium"><svg class="animate-spin h-3.5 w-3.5 text-blue-600" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Analyzing query with <strong>${activeModel}</strong>...</span>`;
 
       setTimeout(() => {
-        text.innerText = `For "${query}": The highest earning stock photo themes in 2026 are authentic lifestyle, diverse workplace collaboration, modern sustainability concepts, and cinematic golden hour lighting. You can launch the Metadata Generator to extract 48 commercial tags and an Adobe Stock top-ranking title!`;
-      }, 600);
+        const cfg = MODEL_CONFIGS[activeModel] || MODEL_CONFIGS['ChatGPT'];
+        text.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200">
+                ${cfg.icon} ${cfg.badge}
+              </span>
+              <span class="text-[11px] text-slate-400 font-normal">0.3s response</span>
+            </div>
+            <p class="text-slate-700 text-xs sm:text-sm leading-relaxed">
+              <strong>${activeModel}</strong> analysis for <em>"${query}"</em>: High-earning stock themes in 2026 emphasize authentic human emotions, renewable energy, and cinematic natural light. Click <strong>Metadata Generation</strong> below to create 48 compliant tags and Adobe Stock #1 ranked titles!
+            </p>
+          </div>
+        `;
+      }, 450);
     }
 
     function initKeyboardShortcuts() {
