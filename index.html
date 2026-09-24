@@ -516,9 +516,14 @@
         <button onclick="openBulkToolsModal()" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 transition">
           <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-600"></i> Bulk Tools
         </button>
-        <button onclick="downloadAdobeStockCsv()" class="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition shadow-xs">
-          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Export CSV
-        </button>
+        <div class="inline-flex items-center rounded-xl shadow-xs overflow-hidden">
+          <button onclick="exportActivePlatformCsv()" class="text-xs font-bold px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Export CSV
+          </button>
+          <button onclick="openExportModal()" title="Choose Agency CSV Format" class="text-xs font-bold px-2 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white border-l border-emerald-500/60 transition">
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -670,9 +675,14 @@
             <button onclick="openBulkToolsModal()" class="text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 flex items-center gap-1.5 transition">
               <i data-lucide="sparkle" class="w-3.5 h-3.5"></i> Bulk Apply
             </button>
-            <button onclick="downloadAdobeStockCsv()" class="flex-1 sm:flex-none text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-1.5 rounded-xl border border-emerald-200 flex items-center justify-center gap-1.5 transition">
-              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Export CSV
-            </button>
+            <div class="inline-flex items-center rounded-xl border border-emerald-200 shadow-xs overflow-hidden flex-1 sm:flex-none">
+              <button onclick="exportActivePlatformCsv()" class="flex-1 sm:flex-none text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-1.5 flex items-center justify-center gap-1.5 transition">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Export CSV
+              </button>
+              <button onclick="openExportModal()" title="Export Agency Formats" class="text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2 py-1.5 border-l border-emerald-200 transition">
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
             <button onclick="clearEntireBatch()" class="text-xs font-semibold text-rose-500 hover:text-rose-600 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition">
               Clear All
             </button>
@@ -1731,6 +1741,119 @@
     </div>
   </div>
 
+  <!-- ================= EXPORT AGENCY CSV MODAL ================= -->
+  <div id="exportAgencyModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-xs">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+              Export Microstock CSV
+              <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                UTF-8 Protected
+              </span>
+            </h3>
+            <p class="text-xs text-slate-500">100% Agency Format Compliant • Zero Text Corruption in Excel</p>
+          </div>
+        </div>
+        <button onclick="closeExportModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Quick Agency Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Adobe Stock -->
+        <div class="p-3.5 rounded-2xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Adobe Stock
+              </span>
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">5 Columns</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1 font-mono">Filename, Title, Keywords, Category, Releases</p>
+          </div>
+          <button onclick="downloadAdobeStockCsv(); closeExportModal();" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Adobe CSV
+          </button>
+        </div>
+
+        <!-- Shutterstock -->
+        <div class="p-3.5 rounded-2xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/30 transition flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Shutterstock
+              </span>
+              <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">4 Columns</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1 font-mono">Filename, Description, Keywords, Categories</p>
+          </div>
+          <button onclick="downloadShutterstockCsv(); closeExportModal();" class="w-full py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Shutterstock CSV
+          </button>
+        </div>
+
+        <!-- Freepik -->
+        <div class="p-3.5 rounded-2xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 transition flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Freepik
+              </span>
+              <span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">3 Columns</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1 font-mono">Filename, Title, Keywords</p>
+          </div>
+          <button onclick="downloadFreepikCsv(); closeExportModal();" class="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Freepik CSV
+          </button>
+        </div>
+
+        <!-- Vecteezy -->
+        <div class="p-3.5 rounded-2xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/30 transition flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Vecteezy
+              </span>
+              <span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">4 Columns</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1 font-mono">Filename, Title, Description, Keywords</p>
+          </div>
+          <button onclick="downloadVecteezyCsv(); closeExportModal();" class="w-full py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Vecteezy CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Universal & Extra Actions -->
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h4 class="text-xs font-extrabold text-slate-800">Universal Microstock Master Export</h4>
+            <p class="text-[11px] text-slate-500 font-mono">Includes Filename, Title, Desc, Keywords, Category, Medium, Releases</p>
+          </div>
+          <button onclick="downloadUniversalCsv(); closeExportModal();" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Universal CSV
+          </button>
+        </div>
+        <div class="flex items-center gap-2 pt-2 border-t border-slate-200/80">
+          <button onclick="copyAllCsvToClipboard(); closeExportModal();" class="flex-1 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5 text-blue-600"></i> Copy CSV Table
+          </button>
+          <button onclick="downloadProjectZip(); closeExportModal();" class="flex-1 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="archive" class="w-3.5 h-3.5 text-indigo-600"></i> Download ZIP
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= IMAGE ZOOM MODAL ================= -->
   <div id="imageZoomModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeImageZoomModal()">
     <div class="relative max-w-4xl max-h-[92vh] flex flex-col items-center" onclick="event.stopPropagation()">
@@ -2124,12 +2247,26 @@
         'genericToolModal', 'bulkToolsModal', 'imageZoomModal', 'apiKeyDialog', 
         'upgradeModal', 'image2PromptModal', 'imageGenModal', 'aiPromptGenModal', 
         'aiBatchEditorModal', 'eventCalendarModal', 'rejectionPredictorModal', 
-        'imageUpscaleModal', 'bgRemoverModal', 'micstockAnalysisModal'
+        'imageUpscaleModal', 'bgRemoverModal', 'micstockAnalysisModal', 'exportAgencyModal'
       ];
       modalIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
       });
+    }
+
+    function openExportModal() {
+      if (batchItemList.length === 0) {
+        showToast('Please upload images first');
+        return;
+      }
+      document.getElementById('exportAgencyModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeExportModal() {
+      const el = document.getElementById('exportAgencyModal');
+      if (el) el.classList.add('hidden');
     }
 
     function closeToolModal() {
@@ -3179,9 +3316,9 @@
               meta = generateSmartFallbackMetadata(item.fileName, itemIdx);
             }
 
-            item.title = meta.title;
-            item.description = meta.description;
-            item.keywords = meta.keywords && meta.keywords.length > 0 ? meta.keywords : [];
+            item.title = cleanStockTitle(meta.title);
+            item.description = cleanStockDescription(meta.description || meta.title);
+            item.keywords = cleanStockKeywords(meta.keywords, 49);
             item.category = meta.category || item.category;
             item.status = 'done';
           } catch (err) {
@@ -3190,9 +3327,9 @@
             if (!item.dataUrl) {
               item.dataUrl = await readFileDataUrl(item.file);
             }
-            item.title = fallback.title;
-            item.description = fallback.description;
-            item.keywords = fallback.keywords;
+            item.title = cleanStockTitle(fallback.title);
+            item.description = cleanStockDescription(fallback.description);
+            item.keywords = cleanStockKeywords(fallback.keywords, 49);
             item.category = fallback.category || item.category;
             item.status = 'done';
           }
@@ -3229,6 +3366,131 @@
         r.onerror = () => res('');
         r.readAsDataURL(file);
       });
+    }
+
+    // ==========================================
+    // Microstock Compliance & CSV Sanitizers
+    // ==========================================
+    function cleanStockTitle(rawTitle) {
+      if (!rawTitle) return '';
+      let t = String(rawTitle);
+
+      // 1. Strip LLM label prefix like "Title:" or "title:"
+      t = t.replace(/^(title\s*:\s*)/i, '');
+
+      // 2. Decode standard HTML entities
+      t = t.replace(/&amp;/g, '&')
+           .replace(/&quot;/g, '"')
+           .replace(/&#39;/g, "'")
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&nbsp;/g, ' ');
+
+      // 3. Normalize curly quotes and special dashes
+      t = t.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
+           .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, "'")
+           .replace(/[\u2013\u2014]/g, '-')
+           .replace(/\u2026/g, '...');
+
+      // 4. Double quotes strictly converted to single quotes for stock agency compliance
+      t = t.replace(/"/g, "'");
+
+      // 5. Replace newlines, line breaks (\r, \n) and tabs with a single space
+      // Critical: internal newlines corrupt CSV rows in Excel and stock contributor portals
+      t = t.replace(/[\r\n\t]+/g, ' ');
+
+      // 6. Remove invisible control characters
+      t = t.replace(/[\x00-\x1F\x7F]/g, '');
+
+      // 7. Strip surrounding quotes and whitespace
+      t = t.replace(/^['"\s]+|['"\s]+$/g, '');
+
+      // 8. Remove trailing punctuation (periods, commas, colons)
+      t = t.replace(/[.,;:\s]+$/, '').trim();
+
+      // 9. Collapse multiple spaces
+      t = t.replace(/\s+/g, ' ');
+
+      return t;
+    }
+
+    function cleanStockDescription(rawDesc) {
+      if (!rawDesc) return '';
+      let d = String(rawDesc);
+      d = d.replace(/^(description\s*:\s*)/i, '');
+      d = d.replace(/&amp;/g, '&')
+           .replace(/&quot;/g, '"')
+           .replace(/&#39;/g, "'")
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&nbsp;/g, ' ');
+      d = d.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
+           .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, "'")
+           .replace(/[\u2013\u2014]/g, '-')
+           .replace(/\u2026/g, '...');
+      d = d.replace(/"/g, "'");
+      d = d.replace(/[\r\n\t]+/g, ' ');
+      d = d.replace(/[\x00-\x1F\x7F]/g, '');
+      d = d.replace(/^['"\s]+|['"\s]+$/g, '').trim();
+      d = d.replace(/\s+/g, ' ');
+      return d;
+    }
+
+    function cleanStockKeywords(rawKeywords, maxCount = 49) {
+      if (!Array.isArray(rawKeywords)) return [];
+      const result = [];
+      const seen = new Set();
+      rawKeywords.forEach(k => {
+        if (!k) return;
+        const parts = String(k).split(/[,;]/);
+        parts.forEach(p => {
+          let tag = p.toLowerCase()
+                     .replace(/&amp;/g, '&')
+                     .replace(/[\r\n\t]+/g, ' ')
+                     .replace(/[\x00-\x1F\x7F]/g, '')
+                     .replace(/['"]/g, '')
+                     .replace(/[^\w\s-]/g, '')
+                     .trim();
+          tag = tag.replace(/\s+/g, ' ');
+          if (tag.length >= 2 && !seen.has(tag) && result.length < maxCount) {
+            seen.add(tag);
+            result.push(tag);
+          }
+        });
+      });
+      return result;
+    }
+
+    function formatCsvCell(val, options = {}) {
+      if (val === null || val === undefined) return '""';
+      let s = options.isTitle ? cleanStockTitle(val) : String(val);
+      if (!options.isTitle) {
+        s = s.replace(/&amp;/g, '&')
+             .replace(/&quot;/g, '"')
+             .replace(/&#39;/g, "'")
+             .replace(/&lt;/g, '<')
+             .replace(/&gt;/g, '>')
+             .replace(/[\u2018\u2019]/g, "'")
+             .replace(/[\u201C\u201D]/g, "'")
+             .replace(/[\u2013\u2014]/g, '-')
+             .replace(/[\r\n\t]+/g, ' ')
+             .replace(/[\x00-\x1F\x7F]/g, '')
+             .replace(/^['"\s]+|['"\s]+$/g, '')
+             .replace(/\s+/g, ' ')
+             .trim();
+      }
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+
+    function formatCsvKeywords(keywordsArray, maxCount = 49) {
+      const cleanList = cleanStockKeywords(keywordsArray, maxCount);
+      return `"${cleanList.join(', ')}"`;
+    }
+
+    function downloadCsvFile(csvContent, filename) {
+      // UTF-8 BOM (\uFEFF) forces Microsoft Excel & spreadsheet viewers on Windows/Mac to parse as UTF-8 Unicode
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      saveAs(blob, filename);
     }
 
     async function fetchStockMetadataWithGemini(base64Image, mimeType, fileName) {
@@ -3318,7 +3580,12 @@ Key requirements for Adobe Stock:
 
           const parsed = JSON.parse(rawText);
           if (parsed.title && Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
-            return parsed;
+            return {
+              title: cleanStockTitle(parsed.title),
+              description: cleanStockDescription(parsed.description || parsed.title),
+              keywords: cleanStockKeywords(parsed.keywords, 49),
+              category: parsed.category || 'Lifestyle'
+            };
           }
           throw new Error('Incomplete JSON data returned');
         } catch (e) {
@@ -3331,35 +3598,47 @@ Key requirements for Adobe Stock:
 
     function generateSmartFallbackMetadata(filename, seedIndex = 0) {
       const cleanName = filename.replace(/\.[^/.]+$/, "").replace(/[-_0-9]+/g, " ").trim();
-      const words = cleanName.split(" ").filter(w => w.length > 2);
+      const rawWords = cleanName.split(/\s+/).filter(w => w.length > 2);
+      const isGenericName = rawWords.length === 0 || rawWords.every(w => /^(img|dsc|pic|photo|image|dcim|screenshot|untitled|asset|raw|capture|file|sam)$/i.test(w));
       
       const themes = [
-        { subject: "Modern Lifestyle Concept", category: "Lifestyle", tag1: "lifestyle", tag2: "contemporary", tag3: "everyday life", tag4: "activity", tag5: "person" },
-        { subject: "Professional Business Strategy", category: "Business", tag1: "business", tag2: "professional", tag3: "corporate", tag4: "office", tag5: "strategy" },
-        { subject: "Creative Studio Visual", category: "Graphic Resources", tag1: "creative", tag2: "minimalist", tag3: "studio shot", tag4: "artistic", tag5: "elegance" },
-        { subject: "Commercial Advertising Asset", category: "Business", tag1: "marketing", tag2: "advertising", tag3: "commercial", tag4: "branding", tag5: "product" },
-        { subject: "Scenic Nature Landscape", category: "Landscapes", tag1: "nature", tag2: "scenic", tag3: "environment", tag4: "organic", tag5: "landscape" },
-        { subject: "Technology and Innovation Concept", category: "Technology", tag1: "technology", tag2: "innovation", tag3: "futuristic", tag4: "digital", tag5: "network" },
-        { subject: "Gourmet Delicious Food Presentation", category: "Food", tag1: "food", tag2: "delicious", tag3: "gourmet", tag4: "culinary", tag5: "fresh" },
-        { subject: "International Travel and Tourism", category: "Travel", tag1: "travel", tag2: "vacation", tag3: "tourism", tag4: "destination", tag5: "journey" }
+        { subject: "Modern Lifestyle and Everyday Wellbeing", category: "Lifestyle", tag1: "lifestyle", tag2: "contemporary", tag3: "everyday life", tag4: "wellbeing", tag5: "person" },
+        { subject: "Professional Business Corporate Strategy", category: "Business", tag1: "business", tag2: "professional", tag3: "corporate", tag4: "office", tag5: "strategy" },
+        { subject: "Creative Studio Design Visual Composition", category: "Graphic Resources", tag1: "creative", tag2: "minimalist", tag3: "studio shot", tag4: "artistic", tag5: "elegance" },
+        { subject: "Commercial Advertising Product and Brand Asset", category: "Business", tag1: "marketing", tag2: "advertising", tag3: "commercial", tag4: "branding", tag5: "product" },
+        { subject: "Scenic Nature Landscape with Natural Sunlight", category: "Landscapes", tag1: "nature", tag2: "scenic", tag3: "environment", tag4: "organic", tag5: "landscape" },
+        { subject: "High Technology Innovation and Digital Connectivity", category: "Technology", tag1: "technology", tag2: "innovation", tag3: "futuristic", tag4: "digital", tag5: "network" },
+        { subject: "Gourmet Delicious Culinary Food Presentation", category: "Food", tag1: "food", tag2: "delicious", tag3: "gourmet", tag4: "culinary", tag5: "fresh" },
+        { subject: "International Travel Adventure and Cultural Tourism", category: "Travel", tag1: "travel", tag2: "vacation", tag3: "tourism", tag4: "destination", tag5: "journey" }
       ];
       const selectedTheme = themes[seedIndex % themes.length];
 
-      let subjectPhrase = words.length > 0 ? words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") : selectedTheme.subject;
-      if (subjectPhrase.length < 20) {
+      let subjectPhrase = !isGenericName 
+        ? rawWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") 
+        : selectedTheme.subject;
+
+      if (subjectPhrase.length < 25) {
         subjectPhrase = `${subjectPhrase} in Professional Commercial Setting`;
       }
 
       let title = subjectPhrase;
       if (title.length < 55) {
-        title = `${subjectPhrase} for Advertising and Publishing`;
+        title = `${subjectPhrase} for Commercial Advertising and Publishing`;
       }
-      title = title.slice(0, 75).trim();
+      
+      title = cleanStockTitle(title);
+      if (title.length > 75) {
+        let trimmed = title.slice(0, 75);
+        const lastSpace = trimmed.lastIndexOf(' ');
+        if (lastSpace > 45) trimmed = trimmed.slice(0, lastSpace);
+        title = trimmed.trim();
+      }
+      title = cleanStockTitle(title);
 
-      const description = `Commercial stock visual asset featuring ${subjectPhrase.toLowerCase()}, suitable for editorial publishing, marketing campaigns, and web media.`;
+      const description = cleanStockDescription(`Commercial stock visual asset featuring ${subjectPhrase.toLowerCase()}, suitable for editorial publishing, marketing campaigns, and digital media.`);
 
       const top10Candidates = [
-        ...(words.length > 0 ? words.map(w => w.toLowerCase()) : [selectedTheme.tag1, selectedTheme.tag2]),
+        ...(!isGenericName ? rawWords.map(w => w.toLowerCase()) : [selectedTheme.tag1, selectedTheme.tag2]),
         selectedTheme.tag3,
         selectedTheme.tag4,
         selectedTheme.tag5,
@@ -3377,7 +3656,7 @@ Key requirements for Adobe Stock:
         "contemporary", "elegance", "vibrant", "authentic", "perfection"
       ];
 
-      const allTags = Array.from(new Set([...top10, ...secondaryPool])).slice(0, 48);
+      const allTags = cleanStockKeywords(Array.from(new Set([...top10, ...secondaryPool])), 48);
       return { title, description, keywords: allTags, category: selectedTheme.category };
     }
 
@@ -3525,6 +3804,12 @@ Key requirements for Adobe Stock:
     function onTitleChanged() {
       const input = document.getElementById('metaTitleBox');
       const counter = document.getElementById('titleCounter');
+
+      // Auto-strip newlines and tabs if pasted to preserve CSV row integrity
+      if (/[\r\n\t]/.test(input.value)) {
+        input.value = input.value.replace(/[\r\n\t]+/g, ' ');
+      }
+
       const len = input.value.length;
       counter.innerText = `${len} / 75 chars (Optimal: 55-75)`;
       
@@ -3555,6 +3840,12 @@ Key requirements for Adobe Stock:
     function onDescChanged() {
       const textarea = document.getElementById('metaDescBox');
       const counter = document.getElementById('descCounter');
+
+      // Strip newlines to avoid row splits in CSV spreadsheets
+      if (/[\r\n\t]/.test(textarea.value)) {
+        textarea.value = textarea.value.replace(/[\r\n\t]+/g, ' ');
+      }
+
       const len = textarea.value.length;
       counter.innerText = `${len} chars`;
 
@@ -3806,11 +4097,12 @@ Key requirements for Adobe Stock:
     function copyCurrentCsvRow() {
       if (currentActiveIdx < 0) return;
       const it = batchItemList[currentActiveIdx];
-      const tags = `"${it.keywords.join(', ')}"`;
-      const title = `"${(it.title || '').replace(/"/g, '""')}"`;
-      const cat = `"${it.category || 'Lifestyle'}"`;
-      const rel = `"${(it.releases || '').replace(/"/g, '""')}"`;
-      const row = `"${it.fileName}",${title},${tags},${cat},${rel}\n`;
+      const fn = formatCsvCell(it.fileName);
+      const title = formatCsvCell(it.title, { isTitle: true });
+      const kw = formatCsvKeywords(it.keywords, 49);
+      const cat = formatCsvCell(it.category || 'Lifestyle');
+      const rel = formatCsvCell(it.releases || '');
+      const row = `${fn},${title},${kw},${cat},${rel}\r\n`;
       clipboardSafeCopy(row);
       showToast('CSV Row copied!');
     }
@@ -3820,9 +4112,14 @@ Key requirements for Adobe Stock:
         showToast('No assets to copy');
         return;
       }
-      let csv = "Filename,Title,Keywords,Category,Releases\n";
+      let csv = "Filename,Title,Keywords,Category,Releases\r\n";
       batchItemList.forEach(it => {
-        csv += `"${it.fileName}","${(it.title || '').replace(/"/g, '""')}","${(it.keywords || []).join(', ')}","${it.category || 'Lifestyle'}","${(it.releases || '').replace(/"/g, '""')}"\n`;
+        const fn = formatCsvCell(it.fileName);
+        const title = formatCsvCell(it.title, { isTitle: true });
+        const kw = formatCsvKeywords(it.keywords, 49);
+        const cat = formatCsvCell(it.category || 'Lifestyle');
+        const rel = formatCsvCell(it.releases || '');
+        csv += `${fn},${title},${kw},${cat},${rel}\r\n`;
       });
       clipboardSafeCopy(csv);
       showToast(`Copied all ${batchItemList.length} rows to clipboard!`);
@@ -3862,20 +4159,36 @@ Key requirements for Adobe Stock:
         } else {
           meta = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1);
         }
-        item.title = meta.title || item.title;
-        item.description = meta.description || item.description;
-        item.keywords = meta.keywords && meta.keywords.length > 0 ? meta.keywords : item.keywords;
+        item.title = cleanStockTitle(meta.title || item.title);
+        item.description = cleanStockDescription(meta.description || item.description);
+        item.keywords = cleanStockKeywords(meta.keywords && meta.keywords.length > 0 ? meta.keywords : item.keywords, 49);
         item.category = meta.category || item.category;
         loadActiveItem(currentActiveIdx);
         showToast('Updated with fresh metadata!');
       } catch (e) {
         const fallback = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1);
-        item.title = fallback.title;
-        item.description = fallback.description;
-        item.keywords = fallback.keywords;
+        item.title = cleanStockTitle(fallback.title);
+        item.description = cleanStockDescription(fallback.description);
+        item.keywords = cleanStockKeywords(fallback.keywords, 49);
         item.category = fallback.category || item.category;
         loadActiveItem(currentActiveIdx);
         showToast('Updated with distinct SEO metadata');
+      }
+    }
+
+    function exportActivePlatformCsv() {
+      if (batchItemList.length === 0) {
+        showToast('Upload images first');
+        return;
+      }
+      if (activePlatform === 'Shutterstock') {
+        downloadShutterstockCsv();
+      } else if (activePlatform === 'Freepik') {
+        downloadFreepikCsv();
+      } else if (activePlatform === 'Vecteezy') {
+        downloadVecteezyCsv();
+      } else {
+        downloadAdobeStockCsv();
       }
     }
 
@@ -3885,19 +4198,18 @@ Key requirements for Adobe Stock:
         return;
       }
 
-      let csv = "Filename,Title,Keywords,Category,Releases\n";
+      let csv = "Filename,Title,Keywords,Category,Releases\r\n";
       batchItemList.forEach(it => {
-        const fn = `"${it.fileName}"`;
-        const title = `"${(it.title || '').replace(/"/g, '""')}"`;
-        const kw = `"${(it.keywords || []).join(', ')}"`;
-        const cat = `"${it.category || 'Lifestyle'}"`;
-        const rel = `"${(it.releases || '').replace(/"/g, '""')}"`;
-        csv += `${fn},${title},${kw},${cat},${rel}\n`;
+        const fn = formatCsvCell(it.fileName);
+        const title = formatCsvCell(it.title, { isTitle: true });
+        const kw = formatCsvKeywords(it.keywords, 49);
+        const cat = formatCsvCell(it.category || 'Lifestyle');
+        const rel = formatCsvCell(it.releases || '');
+        csv += `${fn},${title},${kw},${cat},${rel}\r\n`;
       });
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, `adobe_stock_metadata_${Date.now()}.csv`);
-      showToast('Official Adobe Stock CSV Downloaded!');
+      downloadCsvFile(csv, `adobe_stock_metadata_${Date.now()}.csv`);
+      showToast('Official Adobe Stock CSV Downloaded (UTF-8 Protected)!');
     }
 
     function downloadShutterstockCsv() {
@@ -3906,18 +4218,17 @@ Key requirements for Adobe Stock:
         return;
       }
 
-      let csv = "Filename,Description,Keywords,Categories\n";
+      let csv = "Filename,Description,Keywords,Categories\r\n";
       batchItemList.forEach(it => {
-        const fn = `"${it.fileName}"`;
-        const desc = `"${(it.description || it.title || '').replace(/"/g, '""')}"`;
-        const kw = `"${(it.keywords || []).join(', ')}"`;
-        const cat = `"${it.category || 'Lifestyle'}"`;
-        csv += `${fn},${desc},${kw},${cat}\n`;
+        const fn = formatCsvCell(it.fileName);
+        const desc = formatCsvCell(it.description || it.title, { isTitle: true });
+        const kw = formatCsvKeywords(it.keywords, 50);
+        const cat = formatCsvCell(it.category || 'Lifestyle');
+        csv += `${fn},${desc},${kw},${cat}\r\n`;
       });
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, `shutterstock_metadata_${Date.now()}.csv`);
-      showToast('Shutterstock CSV Downloaded!');
+      downloadCsvFile(csv, `shutterstock_metadata_${Date.now()}.csv`);
+      showToast('Shutterstock CSV Downloaded (UTF-8 Protected)!');
     }
 
     function downloadFreepikCsv() {
@@ -3926,17 +4237,16 @@ Key requirements for Adobe Stock:
         return;
       }
 
-      let csv = "Filename,Title,Keywords\n";
+      let csv = "Filename,Title,Keywords\r\n";
       batchItemList.forEach(it => {
-        const fn = `"${it.fileName}"`;
-        const title = `"${(it.title || '').replace(/"/g, '""')}"`;
-        const kw = `"${(it.keywords || []).join(', ')}"`;
-        csv += `${fn},${title},${kw}\n`;
+        const fn = formatCsvCell(it.fileName);
+        const title = formatCsvCell(it.title, { isTitle: true });
+        const kw = formatCsvKeywords(it.keywords, 50);
+        csv += `${fn},${title},${kw}\r\n`;
       });
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, `freepik_metadata_${Date.now()}.csv`);
-      showToast('Freepik CSV Downloaded!');
+      downloadCsvFile(csv, `freepik_metadata_${Date.now()}.csv`);
+      showToast('Freepik CSV Downloaded (UTF-8 Protected)!');
     }
 
     function downloadVecteezyCsv() {
@@ -3945,18 +4255,17 @@ Key requirements for Adobe Stock:
         return;
       }
 
-      let csv = "Filename,Title,Description,Keywords\n";
+      let csv = "Filename,Title,Description,Keywords\r\n";
       batchItemList.forEach(it => {
-        const fn = `"${it.fileName}"`;
-        const title = `"${(it.title || '').replace(/"/g, '""')}"`;
-        const desc = `"${(it.description || '').replace(/"/g, '""')}"`;
-        const kw = `"${(it.keywords || []).join(', ')}"`;
-        csv += `${fn},${title},${desc},${kw}\n`;
+        const fn = formatCsvCell(it.fileName);
+        const title = formatCsvCell(it.title, { isTitle: true });
+        const desc = formatCsvCell(it.description || it.title);
+        const kw = formatCsvKeywords(it.keywords, 50);
+        csv += `${fn},${title},${desc},${kw}\r\n`;
       });
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, `vecteezy_metadata_${Date.now()}.csv`);
-      showToast('Vecteezy CSV Downloaded!');
+      downloadCsvFile(csv, `vecteezy_metadata_${Date.now()}.csv`);
+      showToast('Vecteezy CSV Downloaded (UTF-8 Protected)!');
     }
 
     function downloadUniversalCsv() {
@@ -3965,21 +4274,20 @@ Key requirements for Adobe Stock:
         return;
       }
 
-      let csv = "Filename,Title,Description,Keywords,Category,Medium,Releases\n";
+      let csv = "Filename,Title,Description,Keywords,Category,Medium,Releases\r\n";
       batchItemList.forEach(it => {
-        const fn = `"${it.fileName}"`;
-        const title = `"${(it.title || '').replace(/"/g, '""')}"`;
-        const desc = `"${(it.description || '').replace(/"/g, '""')}"`;
-        const kw = `"${(it.keywords || []).join(', ')}"`;
-        const cat = `"${it.category || 'Lifestyle'}"`;
-        const med = `"${it.medium || 'Photo'}"`;
-        const rel = `"${(it.releases || '').replace(/"/g, '""')}"`;
-        csv += `${fn},${title},${desc},${kw},${cat},${med},${rel}\n`;
+        const fn = formatCsvCell(it.fileName);
+        const title = formatCsvCell(it.title, { isTitle: true });
+        const desc = formatCsvCell(it.description || it.title);
+        const kw = formatCsvKeywords(it.keywords, 49);
+        const cat = formatCsvCell(it.category || 'Lifestyle');
+        const med = formatCsvCell(it.medium || 'Photo');
+        const rel = formatCsvCell(it.releases || '');
+        csv += `${fn},${title},${desc},${kw},${cat},${med},${rel}\r\n`;
       });
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, `universal_stock_metadata_${Date.now()}.csv`);
-      showToast('Universal Microstock CSV Downloaded!');
+      downloadCsvFile(csv, `universal_stock_metadata_${Date.now()}.csv`);
+      showToast('Universal Microstock CSV Downloaded (UTF-8 Protected)!');
     }
 
     function downloadProjectZip() {
@@ -3998,14 +4306,19 @@ Key requirements for Adobe Stock:
 
       function finalizeZip() {
         if (batchItemList.length > 0) {
-          let csv = "Filename,Title,Keywords,Category,Releases\n";
+          let csv = "\uFEFFFilename,Title,Keywords,Category,Releases\r\n";
           batchItemList.forEach(it => {
-            csv += `"${it.fileName}","${(it.title || '').replace(/"/g, '""')}","${(it.keywords || []).join(', ')}","${it.category || 'Lifestyle'}","${(it.releases || '').replace(/"/g, '""')}"\n`;
+            const fn = formatCsvCell(it.fileName);
+            const title = formatCsvCell(it.title, { isTitle: true });
+            const kw = formatCsvKeywords(it.keywords, 49);
+            const cat = formatCsvCell(it.category || 'Lifestyle');
+            const rel = formatCsvCell(it.releases || '');
+            csv += `${fn},${title},${kw},${cat},${rel}\r\n`;
           });
           zip.file("adobe_stock_batch_export.csv", csv);
         }
 
-        zip.file("README.txt", "PixcraftAI Pro Batch Microstock Tool\n1. Double-click index.html to run locally in any browser.\n2. Upload multiple images at once.\n3. Automatic Adobe Stock top 10 weighting & keyword ranking.\n4. Export directly to Adobe Stock Contributor CSV.");
+        zip.file("README.txt", "PixcraftAI Pro Batch Microstock Tool\n1. Double-click index.html to run locally in any browser.\n2. Upload multiple images at once.\n3. Automatic Adobe Stock top 10 weighting & keyword ranking.\n4. Export directly to Adobe Stock Contributor CSV (UTF-8 Excel Clean).");
 
         zip.generateAsync({ type: "blob" }).then(function(content) {
           saveAs(content, "PixcraftAI_Batch_AdobeStock.zip");

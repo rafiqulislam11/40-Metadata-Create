@@ -56,14 +56,18 @@ A professional, high-throughput microstock SEO metadata suite inspired by [PixCr
 - **Touch-Friendly Controls**: Minimum 44px touch targets, non-overflowing flex containers, horizontal smooth carousels, and responsive modal viewports.
 - **Universal Modal Architecture**: Scrollable dialogs with backdrop click dismissal and Escape key handlers.
 
-### 8. 📦 Multi-Agency Ready CSV Exports
+### 8. 📦 Multi-Agency Ready CSV Exports (UTF-8 Unicode Protected)
+- **UTF-8 Byte Order Mark (`\uFEFF`)**: Injected into every CSV export so Microsoft Excel on Windows/Mac and LibreOffice open the file in pure UTF-8 without garbled text (`â€™`, `â€”`, etc.) or character corruption.
+- **RFC 4180 Compliant Sanitization**: All fields automatically stripped of internal line breaks (`\r\n`), tabs, and control characters to prevent broken rows and column shifting.
+- **Microstock Agency Title Rules**: Double quotes inside titles are automatically converted to clean single quotes (`'`) and trailing punctuation (periods, commas) is stripped to ensure 100% acceptance by Adobe Stock and Shutterstock automated parsers.
 - **Adobe Stock CSV**: `Filename,Title,Keywords,Category,Releases`
 - **Shutterstock CSV**: `Filename,Description,Keywords,Categories`
 - **Freepik CSV**: `Filename,Title,Keywords`
 - **Vecteezy CSV**: `Filename,Title,Description,Keywords`
-- **Universal Microstock CSV**: All fields included.
+- **Universal Microstock CSV**: All 7 master fields.
+- **Dedicated Agency Export Modal**: 1-click downloads for any agency format with column format badges.
 - **Clipboard One-Click Copy**: Copy current row or entire batch CSV table.
-- **ZIP Project Bundle**: Download standalone package with clean `index.html` and CSV.
+- **ZIP Project Bundle**: Download standalone package with clean `index.html` and UTF-8 CSV.
 
 ### 9. 🌓 PixCraftAI Dark & Light Themes
 - Sleek dark theme by default (`#080c14` with glassmorphism and neon accents).
