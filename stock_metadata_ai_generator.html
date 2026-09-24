@@ -120,10 +120,10 @@
           <i data-lucide="gift" class="w-4 h-4"></i>
         </button>
 
-        <!-- Credits Badge: 💎 0 / 50 -->
+        <!-- Credits Badge: 💎 500 -->
         <div onclick="openUpgradeModal()" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 cursor-pointer transition text-xs font-bold text-slate-700">
           <i data-lucide="gem" class="w-3.5 h-3.5 text-blue-500"></i>
-          <span id="creditBalanceText">0</span>
+          <span id="creditBalanceText">500</span>
         </div>
 
         <!-- Upgrade Button -->
@@ -1013,7 +1013,7 @@
       </div>
 
       <button onclick="claimBonusCredits(); closeUpgradeModal();" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition">
-        Claim 50 Free Pro Credits
+        Claim 500 Free Pro Credits
       </button>
     </div>
   </div>
@@ -1040,7 +1040,9 @@
     let userApiKey = localStorage.getItem('pixcraft_custom_api_key') || "";
     let selectedModel = localStorage.getItem('pixcraft_selected_model') || "gemini-2.5-flash";
     let activeModel = localStorage.getItem('pixcraft_hub_model') || "GPT-5";
-    let credits = parseInt(localStorage.getItem('pixcraft_credits') || "50");
+    let savedCredits = localStorage.getItem('pixcraft_credits');
+    let credits = (!savedCredits || parseInt(savedCredits) < 500) ? 500 : parseInt(savedCredits);
+    localStorage.setItem('pixcraft_credits', credits);
 
     const SPAM_WORDS = ['isolated', 'isolated on white', 'stunning', 'beautiful', '4k', '8k', 'copyspace', 'copy space', 'background', 'wallpaper', 'nobody'];
 
@@ -1155,10 +1157,10 @@
     }
 
     function claimBonusCredits() {
-      credits += 50;
+      credits += 500;
       localStorage.setItem('pixcraft_credits', credits);
       updateCreditsDisplay();
-      showToast('Added 50 Free Pro Credits to your account!');
+      showToast('Added 500 Free Pro Credits to your account!');
     }
 
     function openFeedbackModal() {
