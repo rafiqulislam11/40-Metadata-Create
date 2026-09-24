@@ -35,6 +35,9 @@ A professional, high-throughput microstock SEO metadata suite inspired by [PixCr
 - **Llama**: Meta Llama 3.3 microstock taxonomy classification.
 - **Qwen**: Alibaba Qwen 2.5 cross-lingual buyer optimization.
 - **Mistral**: Mistral Large 2 high-precision European stock indexing.
+- **Interactive Conversational AI Chat Copilot**: Real-time chatting with **ChatGPT**, **Gemini**, **Claude**, **Grok**, and all 9 models directly from the main search bar or the floating assistant widget.
+- **Bilingual & Context-Aware**: Answers fluently in both English and Bengali (বাংলা), generating high-ranking microstock titles, 48 keywords, Midjourney prompts, and Adobe Stock acceptance tips.
+- **Live Gemini API & Dynamic Built-in Engine**: Connect your Google Gemini API key for live multimodal responses or enjoy the zero-config built-in intelligent engine with instant replies.
 - **5000 Free Pro Credits**: Default active balance for all Pro models.
 - **Fast Built-in Heuristic Mode**: Instant offline generation when no API key is provided, generating compliant titles, descriptions, and 48 ranked tags with zero lag.
 - **Built-in API Key Tester**: Direct "Test Connection" button in the settings modal.
