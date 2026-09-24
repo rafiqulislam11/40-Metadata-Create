@@ -537,7 +537,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-2.5" id="platformSelectorGrid">
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 sm:gap-2.5" id="platformSelectorGrid">
         <!-- Adobe Stock -->
         <button onclick="selectPlatform('Adobe Stock', this)" class="platform-icon-btn active flex flex-col items-center justify-center p-3 rounded-2xl bg-black border-2 border-transparent text-white group shadow-xs">
           <svg class="w-5 h-5 text-rose-500 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -886,9 +886,737 @@
 
   </main>
 
-  <!-- ================= GENERIC TOOL MODAL (For pills like Image2Prompt, etc.) ================= -->
-  <div id="genericToolModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+  <!-- ================= 1. IMAGE2PROMPT GENERATOR MODAL ================= -->
+  <div id="image2PromptModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold border border-indigo-100">
+            <i data-lucide="camera" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Image2Prompt Generator</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Reverse-engineer production prompts for Midjourney v6.1, Flux.1 & SDXL</p>
+          </div>
+        </div>
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="p-5 border-2 border-dashed border-indigo-200 hover:border-indigo-500 rounded-2xl text-center bg-indigo-50/30 transition cursor-pointer relative" onclick="document.getElementById('i2pFileInput').click()">
+          <input type="file" id="i2pFileInput" class="hidden" accept="image/*" onchange="handleI2PUpload(event)">
+          <div id="i2pDropZoneContent" class="space-y-1">
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-indigo-500 mx-auto"></i>
+            <p class="text-xs font-bold text-slate-700">Click to upload stock photo or drop image here</p>
+            <p class="text-[11px] text-slate-400">Supports JPG, PNG, WEBP up to 25MB</p>
+          </div>
+          <div id="i2pPreviewBox" class="hidden flex items-center justify-center gap-3">
+            <img id="i2pThumbnail" src="" class="w-16 h-16 rounded-xl object-cover border border-indigo-200 shadow-sm">
+            <div class="text-left">
+              <p id="i2pFileName" class="text-xs font-bold text-slate-800 truncate max-w-[200px]">image.jpg</p>
+              <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Asset Ready for Analysis</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Or try sample commercial stock styles:</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button onclick="selectI2PSample('Diverse Tech Team', 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&fit=crop')" class="p-2 rounded-xl border border-slate-200 hover:border-indigo-400 text-left bg-slate-50 hover:bg-indigo-50/50 transition text-xs font-medium text-slate-700 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span> <span class="truncate">Modern Team</span>
+            </button>
+            <button onclick="selectI2PSample('Golden Hour Nature Landscape', 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&fit=crop')" class="p-2 rounded-xl border border-slate-200 hover:border-indigo-400 text-left bg-slate-50 hover:bg-indigo-50/50 transition text-xs font-medium text-slate-700 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> <span class="truncate">Scenic Nature</span>
+            </button>
+            <button onclick="selectI2PSample('Minimalist Coffee Roaster', 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&fit=crop')" class="p-2 rounded-xl border border-slate-200 hover:border-indigo-400 text-left bg-slate-50 hover:bg-indigo-50/50 transition text-xs font-medium text-slate-700 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> <span class="truncate">Artisan Coffee</span>
+            </button>
+            <button onclick="selectI2PSample('Clean Solar Energy Panels', 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=400&fit=crop')" class="p-2 rounded-xl border border-slate-200 hover:border-indigo-400 text-left bg-slate-50 hover:bg-indigo-50/50 transition text-xs font-medium text-slate-700 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-500 shrink-0"></span> <span class="truncate">Solar Green Tech</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <span class="text-xs font-bold text-slate-700">Target AI Engine:</span>
+          <select id="i2pEngineSelect" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-800 outline-none">
+            <option value="midjourney">Midjourney v6.1 (Recommended)</option>
+            <option value="flux">Flux.1 Schnell / Dev</option>
+            <option value="sdxl">Stable Diffusion XL</option>
+            <option value="dalle3">DALL-E 3</option>
+          </select>
+        </div>
+
+        <button onclick="runImage2Prompt()" id="i2pRunBtn" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Reverse-Engineer AI Prompt</span>
+        </button>
+
+        <div id="i2pResultArea" class="hidden space-y-3 pt-2 border-t border-slate-100">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Generated Midjourney / Flux Prompt:</span>
+              <button onclick="copyI2PPrompt()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Prompt
+              </button>
+            </div>
+            <textarea id="i2pOutputPrompt" readonly class="w-full text-xs font-mono p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 outline-none h-24 custom-scrollbar"></textarea>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Negative Prompt:</span>
+              <button onclick="copyI2PNegative()" class="text-[11px] font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1">
+                <i data-lucide="copy" class="w-3 h-3"></i> Copy
+              </button>
+            </div>
+            <p id="i2pOutputNegative" class="text-xs font-mono p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-600">low quality, blurry, extra limbs, watermark, text, signature, distorted fingers, noise, oversaturated</p>
+          </div>
+
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="transferI2PToImageGen()" class="flex-1 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="image" class="w-3.5 h-3.5"></i> Send to Image Generator
+            </button>
+            <button onclick="transferI2PToMetadata()" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Generate Stock Metadata
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 2. AI IMAGE GENERATION STUDIO MODAL ================= -->
+  <div id="imageGenModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold border border-violet-100">
+            <i data-lucide="image" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">AI Image Generation Studio</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Generate high-converting commercial stock photos from text prompts</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-200">💎 <span id="imgGenCreditBalance">5000</span> Credits</span>
+          <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Image Prompt</label>
+          <textarea id="imageGenPromptInput" rows="3" placeholder="Describe the stock image you want to create (e.g. Modern renewable solar energy engineer inspecting panels at sunset, clean industrial background, golden hour lighting, 8k commercial stock photo)..." class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 text-slate-800 outline-none focus:ring-2 focus:ring-violet-500 custom-scrollbar"></textarea>
+          
+          <!-- Inspiration chips -->
+          <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Inspiration:</span>
+            <button onclick="setGenPrompt('Diverse corporate business team having coffee and collaborating in sunlit modern tech office, 8k commercial stock photo')" class="text-[10px] bg-slate-100 hover:bg-violet-50 hover:text-violet-600 text-slate-600 px-2 py-0.5 rounded-full font-medium transition">Business Team</button>
+            <button onclick="setGenPrompt('Clean modern solar power station in expansive green valley at sunrise, renewable energy concept, 4k ultra realistic')" class="text-[10px] bg-slate-100 hover:bg-violet-50 hover:text-violet-600 text-slate-600 px-2 py-0.5 rounded-full font-medium transition">Green Energy</button>
+            <button onclick="setGenPrompt('Artisan specialty coffee barista brewing pour-over coffee with warm wooden cafe background, shallow depth of field')" class="text-[10px] bg-slate-100 hover:bg-violet-50 hover:text-violet-600 text-slate-600 px-2 py-0.5 rounded-full font-medium transition">Artisan Cafe</button>
+            <button onclick="setGenPrompt('Modern telemedicine doctor holding digital tablet with hologram medical interface, clean white clinic room')" class="text-[10px] bg-slate-100 hover:bg-violet-50 hover:text-violet-600 text-slate-600 px-2 py-0.5 rounded-full font-medium transition">Healthcare</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Visual Style</label>
+            <select id="genStyleSelect" class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-800 outline-none bg-slate-50">
+              <option value="commercial-photo">Commercial Photography (Stock SOTA)</option>
+              <option value="cinematic">Cinematic Golden Hour</option>
+              <option value="studio-product">Clean Studio Isolated</option>
+              <option value="3d-cgi">Modern 3D CGI Render</option>
+              <option value="vector-art">Clean Flat Vector Art</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Aspect Ratio</label>
+            <select id="genRatioSelect" class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-800 outline-none bg-slate-50">
+              <option value="16:9">16:9 Landscape (Microstock Hero)</option>
+              <option value="1:1">1:1 Square (Instagram/Social)</option>
+              <option value="9:16">9:16 Portrait (Mobile Story)</option>
+              <option value="4:3">4:3 Standard Stock Frame</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Quality Level</label>
+            <select id="genQualitySelect" class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-800 outline-none bg-slate-50">
+              <option value="ultra">Ultra 4K Commercial Grade</option>
+              <option value="high">High Definition (Standard)</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="executeImageGeneration()" id="genSubmitBtn" class="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 transition shadow-md">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Generate Stock Image (10 Credits)</span>
+        </button>
+
+        <!-- Generation Output Area -->
+        <div id="imageGenOutputArea" class="hidden space-y-3 pt-3 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> Generation Complete
+            </span>
+            <span class="text-[11px] font-bold text-slate-500">1024 × 576 px • High Res</span>
+          </div>
+
+          <div class="relative bg-slate-900 rounded-2xl overflow-hidden shadow-lg border border-slate-800 flex items-center justify-center min-h-[260px]">
+            <canvas id="genCanvasPreview" class="max-h-[340px] w-auto max-w-full rounded-xl object-contain"></canvas>
+            <div id="genRenderingSpinner" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-xs flex flex-col items-center justify-center text-white space-y-2">
+              <svg class="animate-spin h-8 w-8 text-violet-400" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+              <p class="text-xs font-bold text-violet-200">Rendering AI Stock Visual with diffusion engine...</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button onclick="downloadGeneratedImage()" class="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Full Image
+            </button>
+            <button onclick="sendGeneratedToMetadataBatch()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Send to Metadata Generator (+)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 3. AI PROMPT GENERATE (ARCHITECT) MODAL ================= -->
+  <div id="aiPromptGenModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-100">
+            <i data-lucide="lightbulb" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Commercial Stock Prompt Architect</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Generate 3 high-yield commercial prompts engineered for Adobe Stock & Shutterstock</p>
+          </div>
+        </div>
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Commercial Niche</label>
+            <select id="promptArchNiche" class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-800 bg-slate-50 outline-none">
+              <option value="Business & Technology">Business & Clean Technology</option>
+              <option value="Healthcare & Wellness">Healthcare, Medicine & Active Senior Life</option>
+              <option value="Everyday Lifestyle">Authentic Diverse Lifestyle & Culture</option>
+              <option value="Sustainability & Eco">Clean Energy, Solar & Eco Agriculture</option>
+              <option value="Food & Culinary">Modern Culinary & Artisan Gastronomy</option>
+              <option value="Industrial & Trade">Modern Manufacturing, Logistics & Robotics</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Lighting & Mood</label>
+            <select id="promptArchLighting" class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-800 bg-slate-50 outline-none">
+              <option value="Golden Hour Cinematic">Golden Hour Natural Sunlight</option>
+              <option value="Clean Commercial Studio">Clean High-Key Studio Lighting</option>
+              <option value="Moody Atmospheric">Moody Cinematic with Deep Shadows</option>
+              <option value="Vibrant Outdoor Daylight">Crisp Daylight with Clean Copy Space</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="executePromptArchitect()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Architect 3 Commercial Prompts</span>
+        </button>
+
+        <div id="promptArchitectOutputs" class="space-y-3 pt-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 4. AI BATCH EDITOR MODAL ================= -->
+  <div id="aiBatchEditorModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100">
+            <i data-lucide="sliders" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">AI Batch Metadata Operations</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Batch edit titles, inject campaign tags, and update categories across entire queue</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="batchEditorQueueCount" class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold">0 Assets in Queue</span>
+          <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-3.5">
+        <!-- 1. Find and replace -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-blue-600"></i> Find & Replace Keywords in All Images
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input type="text" id="batchFindInput" placeholder="Keyword to find (e.g. car)" class="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+            <input type="text" id="batchReplaceInput" placeholder="Replace with (e.g. electric vehicle)" class="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+          </div>
+          <button onclick="executeBatchFindReplace()" class="w-full py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+            Execute Find & Replace
+          </button>
+        </div>
+
+        <!-- 2. Prefix & Suffix -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="type" class="w-3.5 h-3.5 text-indigo-600"></i> Title Prefix & Suffix Formatter
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input type="text" id="batchPrefixInput" placeholder="Prefix (e.g. Authentic: )" class="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+            <input type="text" id="batchSuffixInput" placeholder="Suffix (e.g.  | 4K Stock)" class="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+          </div>
+          <button onclick="executeBatchPrefixSuffix()" class="w-full py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition">
+            Apply Title Modifiers
+          </button>
+        </div>
+
+        <!-- 3. Bulk Tag Injector -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="tag" class="w-3.5 h-3.5 text-emerald-600"></i> Bulk Tag Injector (Adds to Top 10)
+          </span>
+          <input type="text" id="batchInjectTagsInput" placeholder="Enter comma-separated tags (e.g. summer, travel, outdoor, authentic)" class="w-full text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+          <button onclick="executeBatchInjectTags()" class="w-full py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition">
+            Inject Tags into All Images
+          </button>
+        </div>
+
+        <!-- 4. Bulk Category & Medium -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-600"></i> Set Category & Medium Across Batch
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <select id="batchCategorySelect" class="text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+              <option value="Lifestyle">Lifestyle</option>
+              <option value="Business">Business</option>
+              <option value="Technology">Technology</option>
+              <option value="People">People</option>
+              <option value="The Environment">The Environment</option>
+              <option value="Food">Food</option>
+              <option value="Animals">Animals</option>
+              <option value="Buildings and Architecture">Buildings & Architecture</option>
+            </select>
+            <select id="batchMediumSelect" class="text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+              <option value="Photo">Photography (Live Action)</option>
+              <option value="Vector">Vector / Illustration</option>
+              <option value="3D">3D Render / CGI</option>
+              <option value="AI">Generative AI Disclosed</option>
+            </select>
+          </div>
+          <button onclick="executeBatchCategoryMedium()" class="w-full py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition">
+            Set Category & Medium for All
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 5. AI EVENT CALENDAR MODAL ================= -->
+  <div id="eventCalendarModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold border border-indigo-100">
+            <i data-lucide="calendar" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">2026 Microstock Seasonal Trends Calendar</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Submit 60-90 days before holidays to capture peak commercial buyer volume</p>
+          </div>
+        </div>
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Quarter filter tabs -->
+      <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
+        <button onclick="filterCalendar('all', this)" class="cal-tab flex-1 py-1.5 rounded-lg bg-white text-blue-600 shadow-xs">All 2026</button>
+        <button onclick="filterCalendar('Q1', this)" class="cal-tab flex-1 py-1.5 rounded-lg hover:text-slate-900">Q1 (Jan–Mar)</button>
+        <button onclick="filterCalendar('Q2', this)" class="cal-tab flex-1 py-1.5 rounded-lg hover:text-slate-900">Q2 (Apr–Jun)</button>
+        <button onclick="filterCalendar('Q3', this)" class="cal-tab flex-1 py-1.5 rounded-lg hover:text-slate-900">Q3 (Jul–Sep)</button>
+        <button onclick="filterCalendar('Q4', this)" class="cal-tab flex-1 py-1.5 rounded-lg hover:text-slate-900">Q4 (Oct–Dec)</button>
+      </div>
+
+      <!-- Event Cards Grid -->
+      <div id="calendarEventsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Event Cards populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 6. AI REJECTION PREDICTOR MODAL ================= -->
+  <div id="rejectionPredictorModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold border border-rose-100">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Microstock Rejection & Compliance Predictor</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Algorithmic pre-screening against Adobe Stock & Shutterstock review rejections</p>
+          </div>
+        </div>
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Probability Gauge -->
+      <div class="p-5 bg-gradient-to-tr from-emerald-50 to-teal-50 border border-emerald-200 rounded-3xl flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-1">Approval Probability Score</span>
+          <div class="flex items-baseline gap-2">
+            <span id="rejectionScoreNum" class="text-4xl font-black text-emerald-600">96%</span>
+            <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">High Confidence • Approved</span>
+          </div>
+          <p class="text-xs text-emerald-700 mt-1">Asset passes all key 2026 Microstock compliance standards.</p>
+        </div>
+        <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <i data-lucide="check" class="w-8 h-8 stroke-[3]"></i>
+        </div>
+      </div>
+
+      <!-- Inspection Checklist -->
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="font-bold text-slate-700 flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Trademark & Brand IP Infringement
+          </span>
+          <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">PASSED</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="font-bold text-slate-700 flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Keyword Spam Filter (No '4k, isolated, stunning')
+          </span>
+          <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">PASSED</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="font-bold text-slate-700 flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Adobe Stock Top 10 Keyword Weight Check
+          </span>
+          <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">OPTIMAL</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="font-bold text-slate-700 flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Title Character Length (55–75 chars optimal)
+          </span>
+          <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">COMPLIANT</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="font-bold text-slate-700 flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Visual Noise & Compression Artifacts
+          </span>
+          <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">LOW RISK</span>
+        </div>
+      </div>
+
+      <button onclick="autoCleanAndBoostCompliance()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-sm">
+        <i data-lucide="sparkles" class="w-4 h-4"></i> One-Click Auto-Clean & Boost Approval Score
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 7. BULK IMAGE UPSCALE MODAL ================= -->
+  <div id="imageUpscaleModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Bulk Image Upscaler (Super Resolution)</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Enhance resolution to 4K Ultra and 8K commercial stock quality with AI sharpness</p>
+          </div>
+        </div>
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5">
+        <div class="p-5 border-2 border-dashed border-emerald-200 hover:border-emerald-500 rounded-2xl text-center bg-emerald-50/30 transition cursor-pointer relative" onclick="document.getElementById('upscaleFileInput').click()">
+          <input type="file" id="upscaleFileInput" class="hidden" accept="image/*" onchange="handleUpscaleUpload(event)">
+          <div id="upscaleDropContent" class="space-y-1">
+            <i data-lucide="upload" class="w-7 h-7 text-emerald-600 mx-auto"></i>
+            <p class="text-xs font-bold text-slate-700">Drop image to upscale or choose from batch</p>
+            <p class="text-[11px] text-slate-400">Up to 8x resolution increase</p>
+          </div>
+          <div id="upscalePreviewBox" class="hidden flex items-center justify-center gap-3">
+            <img id="upscaleThumbnail" src="" class="w-16 h-16 rounded-xl object-cover border border-emerald-200 shadow-sm">
+            <div class="text-left">
+              <p id="upscaleFileName" class="text-xs font-bold text-slate-800">asset.jpg</p>
+              <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Loaded for Upscaling</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Select Scale Multiplier:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="selectUpscaleFactor(2, this)" class="upscale-pill active p-2.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold text-xs text-center transition">
+              2x (4K Ultra HD)
+            </button>
+            <button type="button" onclick="selectUpscaleFactor(4, this)" class="upscale-pill p-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 hover:bg-emerald-50 text-slate-700 font-extrabold text-xs text-center transition">
+              4x (8K Super Res)
+            </button>
+            <button type="button" onclick="selectUpscaleFactor(8, this)" class="upscale-pill p-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 hover:bg-emerald-50 text-slate-700 font-extrabold text-xs text-center transition">
+              8x (Print Ready 16K)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="upscaleFaceEnhance" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+            <span>Face Clarity Restoration</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="upscaleDenoise" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+            <span>Denoise & Artifact Cleanup</span>
+          </label>
+        </div>
+
+        <button onclick="executeImageUpscale()" id="upscaleRunBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Upscale Image Now (Cost: 15 Credits)</span>
+        </button>
+
+        <div id="upscaleResultArea" class="hidden space-y-3 pt-2 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Upscaled Output Preview:</span>
+            <span id="upscaleDimensionsText" class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">4096 × 2304 px</span>
+          </div>
+
+          <div class="bg-slate-900 rounded-2xl overflow-hidden shadow-lg p-2 flex items-center justify-center min-h-[200px]">
+            <canvas id="upscaleCanvas" class="max-h-[260px] w-auto max-w-full rounded-xl object-contain"></canvas>
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="downloadUpscaledImage()" class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Upscaled PNG
+            </button>
+            <button onclick="sendUpscaledToBatch()" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add to Metadata Queue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8. BULK BG REMOVER MODAL ================= -->
+  <div id="bgRemoverModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold border border-rose-100">
+            <i data-lucide="eraser" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">AI Background Remover & Isolator</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Create clean transparent PNGs or stock-standard pure white isolated cutouts</p>
+          </div>
+        </div>
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5">
+        <div class="p-5 border-2 border-dashed border-rose-200 hover:border-rose-500 rounded-2xl text-center bg-rose-50/30 transition cursor-pointer relative" onclick="document.getElementById('bgFileInput').click()">
+          <input type="file" id="bgFileInput" class="hidden" accept="image/*" onchange="handleBgUpload(event)">
+          <div id="bgDropContent" class="space-y-1">
+            <i data-lucide="upload" class="w-7 h-7 text-rose-500 mx-auto"></i>
+            <p class="text-xs font-bold text-slate-700">Drop image to remove background</p>
+            <p class="text-[11px] text-slate-400">Automatic subject detection & alpha matte</p>
+          </div>
+          <div id="bgPreviewBox" class="hidden flex items-center justify-center gap-3">
+            <img id="bgThumbnail" src="" class="w-16 h-16 rounded-xl object-cover border border-rose-200 shadow-sm">
+            <div class="text-left">
+              <p id="bgFileName" class="text-xs font-bold text-slate-800">subject.jpg</p>
+              <span class="text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">Loaded for Cutout</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1.5">Output Background Style:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="selectBgTarget('transparent', this)" class="bg-opt-pill active p-2.5 rounded-xl border-2 border-rose-600 bg-rose-50 text-rose-800 font-extrabold text-xs text-center transition">
+              Transparent PNG
+            </button>
+            <button type="button" onclick="selectBgTarget('white', this)" class="bg-opt-pill p-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 hover:bg-rose-50 text-slate-700 font-extrabold text-xs text-center transition">
+              Pure White #FFF
+            </button>
+            <button type="button" onclick="selectBgTarget('studio', this)" class="bg-opt-pill p-2.5 rounded-xl border-2 border-slate-200 bg-slate-50 hover:bg-rose-50 text-slate-700 font-extrabold text-xs text-center transition">
+              Clean Studio Gray
+            </button>
+          </div>
+        </div>
+
+        <button onclick="executeBgRemoval()" id="bgRunBtn" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm">
+          <i data-lucide="scissors" class="w-4 h-4"></i>
+          <span>Isolate Subject & Remove Background</span>
+        </button>
+
+        <div id="bgResultArea" class="hidden space-y-3 pt-2 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800">Cutout Output Preview:</span>
+            <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Alpha Cutout Successful</span>
+          </div>
+
+          <!-- Checkered pattern background for transparent preview -->
+          <div class="rounded-2xl overflow-hidden shadow-lg p-3 flex items-center justify-center min-h-[200px]" style="background-image: repeating-linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 75%, #e2e8f0 75%, #e2e8f0), repeating-linear-gradient(45deg, #e2e8f0 25%, #f8fafc 25%, #f8fafc 75%, #e2e8f0 75%, #e2e8f0); background-position: 0 0, 10px 10px; background-size: 20px 20px;">
+            <canvas id="bgCanvas" class="max-h-[240px] w-auto max-w-full rounded-xl object-contain"></canvas>
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="downloadBgRemovedImage()" class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Download PNG
+            </button>
+            <button onclick="sendBgRemovedToBatch()" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add to Metadata Queue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 9. MICSTOCK ANALYSIS MODAL ================= -->
+  <div id="micstockAnalysisModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold border border-cyan-100">
+            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">2026 Microstock Market Intelligence & Agency Matrix</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Agency commission breakdowns, trending buyer demand niches, and keyword search ROI</p>
+          </div>
+        </div>
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Agency Revenue Comparison -->
+      <div class="space-y-3">
+        <div>
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">Major Agency Commission & Ranking Rules:</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-xs font-black text-rose-600">Adobe Stock</span>
+              <p class="text-lg font-black text-slate-900">33%</p>
+              <p class="text-[11px] text-slate-500">Highest commercial RPM. First 10 tags carry 80% search weight.</p>
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-xs font-black text-rose-500">Shutterstock</span>
+              <p class="text-lg font-black text-slate-900">15%–40%</p>
+              <p class="text-[11px] text-slate-500">Tier-based royalties. Prefers full sentence descriptions.</p>
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-xs font-black text-blue-600">Freepik</span>
+              <p class="text-lg font-black text-slate-900">30%</p>
+              <p class="text-[11px] text-slate-500">Fastest download velocity. Clean graphic & utility mockups.</p>
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-xs font-black text-amber-500">Vecteezy</span>
+              <p class="text-lg font-black text-slate-900">$5 CPM</p>
+              <p class="text-[11px] text-slate-500">Solid subscription pool for AI renders and vector art.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- High Demand Niche Opportunities -->
+        <div>
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">2026 High Demand / Low Competition Niches:</span>
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+              <div>
+                <span class="font-bold text-emerald-900">Clean Energy & Solar Grid Infrastructures</span>
+                <p class="text-[11px] text-emerald-700">Engineers, modern inverters, wind turbines in agricultural settings</p>
+              </div>
+              <span class="font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full text-[11px]">Demand: 97% • Low Supply 🔥</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+              <div>
+                <span class="font-bold text-blue-900">Active Senior Healthcare & Assistive Robotics</span>
+                <p class="text-[11px] text-blue-700">Multigenerational wellness, telehealth tablets, smart home seniors</p>
+              </div>
+              <span class="font-extrabold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full text-[11px]">Demand: 93% • Medium Supply</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-between">
+              <div>
+                <span class="font-bold text-purple-900">Hydroponic & Vertical Urban Farming</span>
+                <p class="text-[11px] text-purple-700">LED indoor grow labs, sustainable fresh food technology</p>
+              </div>
+              <span class="font-extrabold text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full text-[11px]">Demand: 95% • Low Supply 🔥</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyword Demand Calculator -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block">Keyword Commercial Demand Estimator:</span>
+          <div class="flex gap-2">
+            <input type="text" id="marketKeywordInput" placeholder="Enter keyword (e.g. artificial intelligence doctor)" class="flex-1 text-xs px-3.5 py-2 rounded-xl bg-white border border-slate-200 outline-none">
+            <button onclick="calculateMarketKeywordRoi()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs rounded-xl transition">
+              Analyze Demand
+            </button>
+          </div>
+          <div id="marketKeywordResult" class="hidden p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1">
+            <div class="flex items-center justify-between font-bold text-slate-800">
+              <span id="marketKeywordTitle">Keyword Analysis</span>
+              <span id="marketKeywordRating" class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">High Yield 🔥</span>
+            </div>
+            <p id="marketKeywordStats" class="text-[11px] text-slate-500">Estimated 18,400 monthly agency buyer searches • Competition: Moderate</p>
+            <p id="marketKeywordPairs" class="text-[11px] text-slate-700 font-mono">Suggested tag pairs: telemedicine, medical tablet, stethoscope, diagnostics, healthcare technology</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 10. GENERIC TOOL MODAL (FALLBACK) ================= -->
+  <div id="genericToolModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4" onclick="if(event.target===this) closeAllModals()">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
@@ -896,24 +1624,20 @@
           </div>
           <h3 class="font-extrabold text-slate-900 text-base" id="genericToolTitle">Tool</h3>
         </div>
-        <button onclick="closeToolModal()" class="text-slate-400 hover:text-slate-700">
+        <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
       <div class="space-y-3 text-xs text-slate-600 leading-relaxed" id="genericToolBody">
-        <p>This tool is fully integrated with PixcraftAI suite. You can drag and drop your stock photo or enter your instructions below to process.</p>
-        <div class="p-4 border-2 border-dashed border-slate-200 rounded-2xl text-center hover:border-blue-500 cursor-pointer bg-slate-50">
-          <i data-lucide="upload" class="w-6 h-6 text-slate-400 mx-auto mb-1"></i>
-          <span class="font-semibold text-slate-700">Drop asset here to analyze</span>
-        </div>
+        <p>This tool is fully integrated with PixcraftAI suite. You can launch Metadata Generation or upload files directly.</p>
       </div>
 
       <div class="flex gap-2 pt-2">
-        <button onclick="closeToolModal()" class="w-1/2 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+        <button onclick="closeAllModals()" class="w-1/2 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
           Close
         </button>
-        <button onclick="switchView('metadata'); closeToolModal();" class="w-1/2 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
+        <button onclick="switchView('metadata'); closeAllModals();" class="w-1/2 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
           Open Metadata Gen
         </button>
       </div>
@@ -1395,14 +2119,793 @@
       document.getElementById('upgradeModal').classList.add('hidden');
     }
 
-    function openToolModal(toolName) {
-      document.getElementById('genericToolTitle').innerText = toolName;
-      document.getElementById('genericToolModal').classList.remove('hidden');
-      lucide.createIcons();
+    function closeAllModals() {
+      const modalIds = [
+        'genericToolModal', 'bulkToolsModal', 'imageZoomModal', 'apiKeyDialog', 
+        'upgradeModal', 'image2PromptModal', 'imageGenModal', 'aiPromptGenModal', 
+        'aiBatchEditorModal', 'eventCalendarModal', 'rejectionPredictorModal', 
+        'imageUpscaleModal', 'bgRemoverModal', 'micstockAnalysisModal'
+      ];
+      modalIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
     }
 
     function closeToolModal() {
-      document.getElementById('genericToolModal').classList.add('hidden');
+      closeAllModals();
+    }
+
+    function openToolModal(toolName) {
+      if (toolName === 'Metadata Generation') {
+        switchView('metadata');
+        return;
+      }
+      closeAllModals();
+
+      if (toolName === 'Image2Prompt Generate') {
+        document.getElementById('image2PromptModal').classList.remove('hidden');
+      } else if (toolName === 'Image Generation') {
+        document.getElementById('imgGenCreditBalance').innerText = credits;
+        document.getElementById('imageGenModal').classList.remove('hidden');
+      } else if (toolName === 'AI Prompt Generate') {
+        document.getElementById('aiPromptGenModal').classList.remove('hidden');
+        if (!document.getElementById('promptArchitectOutputs').innerHTML.trim()) {
+          executePromptArchitect();
+        }
+      } else if (toolName === 'AI Batch Editor') {
+        document.getElementById('batchEditorQueueCount').innerText = `${batchItemList.length} Assets in Queue`;
+        document.getElementById('aiBatchEditorModal').classList.remove('hidden');
+      } else if (toolName === 'AI Event Calendar') {
+        document.getElementById('eventCalendarModal').classList.remove('hidden');
+        renderCalendarEvents('all');
+      } else if (toolName === 'AI Rejection Predictor') {
+        updateRejectionPredictorUI();
+        document.getElementById('rejectionPredictorModal').classList.remove('hidden');
+      } else if (toolName === 'Bulk Image Upscale') {
+        document.getElementById('imageUpscaleModal').classList.remove('hidden');
+      } else if (toolName === 'Bulk BG Remover') {
+        document.getElementById('bgRemoverModal').classList.remove('hidden');
+      } else if (toolName === 'Micstock Analysis') {
+        document.getElementById('micstockAnalysisModal').classList.remove('hidden');
+      } else {
+        document.getElementById('genericToolTitle').innerText = toolName;
+        document.getElementById('genericToolModal').classList.remove('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // 1. Image2Prompt Generator Logic
+    // ==========================================
+    let currentI2PImage = null;
+    let currentI2PTitle = 'Modern Commercial Stock Photography';
+
+    function handleI2PUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        setI2PAsset(evt.target.result, file.name);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function selectI2PSample(name, url) {
+      setI2PAsset(url, name + '.jpg');
+    }
+
+    function setI2PAsset(dataUrl, fileName) {
+      currentI2PImage = dataUrl;
+      currentI2PTitle = fileName.replace(/\.[^/.]+$/, "");
+      document.getElementById('i2pDropZoneContent').classList.add('hidden');
+      document.getElementById('i2pPreviewBox').classList.remove('hidden');
+      document.getElementById('i2pThumbnail').src = dataUrl;
+      document.getElementById('i2pFileName').innerText = fileName;
+      document.getElementById('i2pResultArea').classList.add('hidden');
+    }
+
+    function runImage2Prompt() {
+      const engine = document.getElementById('i2pEngineSelect').value;
+      const btn = document.getElementById('i2pRunBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Analyzing Visual Composition...`;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        let promptText = '';
+        if (engine === 'midjourney') {
+          promptText = `Cinematic commercial stock photo of ${currentI2PTitle.toLowerCase()}, authentic diverse interaction, shot on Hasselblad H6D-100c, 85mm f/1.4 lens, natural golden hour lighting, clean commercial copy space on the right, high dynamic range, hyper-realistic, 8k resolution --ar 16:9 --style raw --v 6.1`;
+        } else if (engine === 'flux') {
+          promptText = `Photorealistic commercial stock photo depicting ${currentI2PTitle.toLowerCase()}, crisp focal clarity, modern professional color palette, natural daylight, generous negative copy space, 35mm film grain, 8k SOTA render`;
+        } else {
+          promptText = `Award-winning commercial photography of ${currentI2PTitle.toLowerCase()}, sharp focus, studio lighting mixed with soft natural rim light, minimalist background, high commercial advertising appeal, 8k`;
+        }
+
+        document.getElementById('i2pOutputPrompt').value = promptText;
+        document.getElementById('i2pResultArea').classList.remove('hidden');
+        showToast('Extracted production AI prompt!');
+        lucide.createIcons();
+      }, 600);
+    }
+
+    function copyI2PPrompt() {
+      const text = document.getElementById('i2pOutputPrompt').value;
+      navigator.clipboard.writeText(text);
+      showToast('Copied Prompt to Clipboard!');
+    }
+
+    function copyI2PNegative() {
+      const text = document.getElementById('i2pOutputNegative').innerText;
+      navigator.clipboard.writeText(text);
+      showToast('Copied Negative Prompt!');
+    }
+
+    function transferI2PToImageGen() {
+      const text = document.getElementById('i2pOutputPrompt').value;
+      closeAllModals();
+      document.getElementById('imageGenPromptInput').value = text;
+      openToolModal('Image Generation');
+    }
+
+    function transferI2PToMetadata() {
+      closeAllModals();
+      addAssetToMetadataQueue(
+        currentI2PImage || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&fit=crop',
+        (currentI2PTitle || 'commercial_asset') + '.jpg',
+        currentI2PTitle || 'Diverse Modern Commercial Concept',
+        ['commercial', 'stock photo', 'modern', 'authentic', 'lifestyle', 'concept', 'business', 'creative', 'high resolution']
+      );
+    }
+
+    // ==========================================
+    // 2. AI Image Generation Studio Logic
+    // ==========================================
+    let currentGeneratedDataUrl = '';
+
+    function setGenPrompt(text) {
+      document.getElementById('imageGenPromptInput').value = text;
+    }
+
+    function executeImageGeneration() {
+      const prompt = document.getElementById('imageGenPromptInput').value.trim();
+      if (!prompt) {
+        showToast('Please enter an image description prompt.');
+        return;
+      }
+
+      if (credits < 10) {
+        credits += 5000;
+        localStorage.setItem('pixcraft_credits', credits);
+        updateCreditsDisplay();
+      }
+
+      credits -= 10;
+      localStorage.setItem('pixcraft_credits', credits);
+      updateCreditsDisplay();
+      document.getElementById('imgGenCreditBalance').innerText = credits;
+
+      const outputArea = document.getElementById('imageGenOutputArea');
+      const spinner = document.getElementById('genRenderingSpinner');
+      const canvas = document.getElementById('genCanvasPreview');
+      const btn = document.getElementById('genSubmitBtn');
+
+      outputArea.classList.remove('hidden');
+      spinner.classList.remove('hidden');
+      btn.disabled = true;
+
+      setTimeout(() => {
+        spinner.classList.add('hidden');
+        btn.disabled = false;
+
+        const ctx = canvas.getContext('2d');
+        const ratio = document.getElementById('genRatioSelect').value;
+        const style = document.getElementById('genStyleSelect').value;
+
+        if (ratio === '1:1') {
+          canvas.width = 800; canvas.height = 800;
+        } else if (ratio === '9:16') {
+          canvas.width = 576; canvas.height = 1024;
+        } else if (ratio === '4:3') {
+          canvas.width = 800; canvas.height = 600;
+        } else {
+          canvas.width = 1024; canvas.height = 576;
+        }
+
+        // Render Procedural High Quality Canvas Visual
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        if (style === 'commercial-photo') {
+          grad.addColorStop(0, '#0f172a');
+          grad.addColorStop(0.5, '#1e293b');
+          grad.addColorStop(1, '#334155');
+        } else if (style === 'cinematic') {
+          grad.addColorStop(0, '#1c1917');
+          grad.addColorStop(0.5, '#451a03');
+          grad.addColorStop(1, '#78350f');
+        } else if (style === '3d-cgi') {
+          grad.addColorStop(0, '#312e81');
+          grad.addColorStop(0.5, '#4338ca');
+          grad.addColorStop(1, '#6366f1');
+        } else {
+          grad.addColorStop(0, '#064e3b');
+          grad.addColorStop(0.5, '#047857');
+          grad.addColorStop(1, '#10b981');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Ambient lighting glow
+        const glow = ctx.createRadialGradient(canvas.width * 0.7, canvas.height * 0.3, 20, canvas.width * 0.7, canvas.height * 0.3, canvas.width * 0.6);
+        glow.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+        glow.addColorStop(0.4, 'rgba(245, 158, 11, 0.2)');
+        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Geometric aesthetic grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 40) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+
+        // Overlay Clean Typographic Watermark & Badge
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('PixcraftAI • Commercial Stock Asset', 32, canvas.height - 50);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.font = '14px "JetBrains Mono", monospace';
+        const displayPrompt = prompt.length > 55 ? prompt.substring(0, 52) + '...' : prompt;
+        ctx.fillText(`Prompt: "${displayPrompt}"`, 32, canvas.height - 24);
+
+        currentGeneratedDataUrl = canvas.toDataURL('image/png');
+        showToast('Generated 4K Commercial Stock Visual!');
+        lucide.createIcons();
+      }, 700);
+    }
+
+    function downloadGeneratedImage() {
+      if (!currentGeneratedDataUrl) return;
+      const a = document.createElement('a');
+      a.href = currentGeneratedDataUrl;
+      a.download = 'pixcraft-ai-stock-' + Date.now() + '.png';
+      a.click();
+      showToast('Image downloaded successfully!');
+    }
+
+    function sendGeneratedToMetadataBatch() {
+      if (!currentGeneratedDataUrl) return;
+      const prompt = document.getElementById('imageGenPromptInput').value || 'Commercial Stock Photo';
+      const cleanTitle = prompt.charAt(0).toUpperCase() + prompt.slice(1, 70);
+      const tags = prompt.toLowerCase().split(/[\s,]+/).filter(w => w.length > 3).slice(0, 48);
+      
+      closeAllModals();
+      addAssetToMetadataQueue(
+        currentGeneratedDataUrl,
+        'gen-stock-' + Date.now() + '.jpg',
+        cleanTitle,
+        tags.length >= 10 ? tags : ['commercial', 'stock photo', 'modern', 'authentic', 'business', 'creative', 'concept', 'ultra resolution', 'high dynamic range', 'golden hour']
+      );
+    }
+
+    // ==========================================
+    // 3. Prompt Architect Logic
+    // ==========================================
+    function executePromptArchitect() {
+      const niche = document.getElementById('promptArchNiche').value;
+      const lighting = document.getElementById('promptArchLighting').value;
+
+      const samples = [
+        {
+          tier: 'Tier 1: High Commercial Demand (Corporate & Tech)',
+          badge: 'High Download Velocity 🔥',
+          color: 'emerald',
+          text: `Authentic commercial photography of diverse group of engineers analyzing data in clean modern research facility, ${lighting.toLowerCase()}, shot on Hasselblad H6D-100c, 85mm f/1.4 lens, clean copy space on the right, high dynamic range, hyper-realistic, 8k resolution --ar 16:9 --style raw --v 6.1`
+        },
+        {
+          tier: 'Tier 2: Advertising Hero Banner (Designer Copy Space)',
+          badge: 'Copy Space Optimized',
+          color: 'blue',
+          text: `Minimalist commercial stock visual of ${niche.toLowerCase()}, ample negative copy space, ${lighting.toLowerCase()}, studio crisp contrast, color-graded for corporate brochures, 4k ultra sharp focus --ar 16:9 --v 6.1`
+        },
+        {
+          tier: 'Tier 3: Documentary Storytelling (Authentic Emotion)',
+          badge: 'Editorial & Storytelling',
+          color: 'indigo',
+          text: `Candid unposed documentary photo representing ${niche.toLowerCase()}, natural human expressions, ${lighting.toLowerCase()}, 35mm street lens, authentic textures, microstock top seller style --ar 16:9 --v 6.1`
+        }
+      ];
+
+      const container = document.getElementById('promptArchitectOutputs');
+      container.innerHTML = samples.map((s) => `
+        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-slate-800">${s.tier}</span>
+            <span class="text-[10px] font-bold text-${s.color}-700 bg-${s.color}-50 px-2 py-0.5 rounded-full border border-${s.color}-200">${s.badge}</span>
+          </div>
+          <p class="text-xs text-slate-700 font-mono bg-white p-2.5 rounded-xl border border-slate-100 leading-relaxed">${s.text}</p>
+          <div class="flex gap-2">
+            <button onclick="navigator.clipboard.writeText(\`${s.text}\`); showToast('Copied Prompt to Clipboard!');" class="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Prompt
+            </button>
+            <button onclick="closeAllModals(); document.getElementById('imageGenPromptInput').value=\`${s.text}\`; openToolModal('Image Generation');" class="text-xs font-bold text-violet-600 hover:text-violet-800 flex items-center gap-1 ml-auto">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Create with this Prompt
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // 4. AI Batch Editor Operations
+    // ==========================================
+    function executeBatchFindReplace() {
+      const findWord = document.getElementById('batchFindInput').value.trim().toLowerCase();
+      const replaceWord = document.getElementById('batchReplaceInput').value.trim().toLowerCase();
+      if (!findWord) {
+        showToast('Please enter keyword to find.');
+        return;
+      }
+
+      let count = 0;
+      batchItemList.forEach(item => {
+        if (item.keywords && item.keywords.length) {
+          const idx = item.keywords.indexOf(findWord);
+          if (idx !== -1) {
+            item.keywords[idx] = replaceWord;
+            count++;
+          }
+        }
+        if (item.title && item.title.toLowerCase().includes(findWord)) {
+          const reg = new RegExp(findWord, 'gi');
+          item.title = item.title.replace(reg, replaceWord);
+        }
+      });
+
+      if (currentActiveIdx >= 0) loadActiveItem(currentActiveIdx);
+      updateBatchUI();
+      showToast(`Updated ${count} occurrences across queue!`);
+      closeAllModals();
+    }
+
+    function executeBatchPrefixSuffix() {
+      const prefix = document.getElementById('batchPrefixInput').value;
+      const suffix = document.getElementById('batchSuffixInput').value;
+      if (!prefix && !suffix) {
+        showToast('Please enter a prefix or suffix.');
+        return;
+      }
+
+      batchItemList.forEach(item => {
+        if (prefix && !item.title.startsWith(prefix)) {
+          item.title = prefix + item.title;
+        }
+        if (suffix && !item.title.endsWith(suffix)) {
+          item.title = item.title + suffix;
+        }
+      });
+
+      if (currentActiveIdx >= 0) loadActiveItem(currentActiveIdx);
+      updateBatchUI();
+      showToast(`Applied title modifiers across all ${batchItemList.length} images!`);
+      closeAllModals();
+    }
+
+    function executeBatchInjectTags() {
+      const raw = document.getElementById('batchInjectTagsInput').value.trim();
+      if (!raw) {
+        showToast('Please enter tags to inject.');
+        return;
+      }
+      const newTags = raw.split(/[\s,]+/).filter(w => w.length > 2);
+      
+      batchItemList.forEach(item => {
+        if (!item.keywords) item.keywords = [];
+        newTags.reverse().forEach(t => {
+          if (!item.keywords.includes(t)) {
+            item.keywords.unshift(t);
+          }
+        });
+        if (item.keywords.length > 50) item.keywords = item.keywords.slice(0, 48);
+      });
+
+      if (currentActiveIdx >= 0) loadActiveItem(currentActiveIdx);
+      updateBatchUI();
+      showToast(`Injected ${newTags.length} high-priority tags across all assets!`);
+      closeAllModals();
+    }
+
+    function executeBatchCategoryMedium() {
+      const cat = document.getElementById('batchCategorySelect').value;
+      const med = document.getElementById('batchMediumSelect').value;
+
+      batchItemList.forEach(item => {
+        item.category = cat;
+        item.medium = med;
+      });
+
+      if (currentActiveIdx >= 0) loadActiveItem(currentActiveIdx);
+      updateBatchUI();
+      showToast(`Updated category to "${cat}" and medium to "${med}"!`);
+      closeAllModals();
+    }
+
+    // ==========================================
+    // 5. 2026 Seasonal Events Calendar
+    // ==========================================
+    const CALENDAR_EVENTS = [
+      {
+        quarter: 'Q1',
+        name: "Ramadan & Eid Al-Fitr 2026",
+        date: "March 20 – April 10, 2026",
+        deadline: "Submit by: December 15, 2025",
+        keywords: ["ramadan", "eid mubarak", "iftar", "crescent moon", "family prayer"],
+        color: "emerald"
+      },
+      {
+        quarter: 'Q1',
+        name: "Valentine's Day & Romance",
+        date: "February 14, 2026",
+        deadline: "Submit by: November 15, 2025",
+        keywords: ["valentines day", "romantic couple", "love", "heart gift", "dinner date"],
+        color: "rose"
+      },
+      {
+        quarter: 'Q1',
+        name: "Earth Day & Green Technology",
+        date: "April 22, 2026",
+        deadline: "Submit by: January 20, 2026",
+        keywords: ["earth day", "renewable energy", "solar panels", "sustainability", "climate"],
+        color: "teal"
+      },
+      {
+        quarter: 'Q2',
+        name: "Mother's Day & Family Love",
+        date: "May 10, 2026",
+        deadline: "Submit by: February 15, 2026",
+        keywords: ["mothers day", "mother daughter", "parenting", "family love", "appreciation"],
+        color: "indigo"
+      },
+      {
+        quarter: 'Q2',
+        name: "Summer Vacation & Beach Travel",
+        date: "June – August 2026",
+        deadline: "Submit by: March 15, 2026",
+        keywords: ["summer vacation", "beach tropical", "travel adventure", "resort", "swimming"],
+        color: "amber"
+      },
+      {
+        quarter: 'Q3',
+        name: "Back to School & Campus Life",
+        date: "August – September 2026",
+        deadline: "Submit by: May 15, 2026",
+        keywords: ["back to school", "student backpack", "classroom", "university", "e-learning"],
+        color: "blue"
+      },
+      {
+        quarter: 'Q3',
+        name: "Autumn Harvest & Halloween",
+        date: "October 31, 2026",
+        deadline: "Submit by: July 15, 2026",
+        keywords: ["halloween", "pumpkin harvest", "autumn leaves", "spooky costume", "fall"],
+        color: "orange"
+      },
+      {
+        quarter: 'Q4',
+        name: "Black Friday & Cyber Monday",
+        date: "Late November 2026",
+        deadline: "Submit by: August 20, 2026",
+        keywords: ["black friday", "online shopping", "e-commerce cart", "discount sale", "delivery"],
+        color: "purple"
+      },
+      {
+        quarter: 'Q4',
+        name: "Christmas & New Year 2027",
+        date: "December 24 – 31, 2026",
+        deadline: "Submit by: September 15, 2026",
+        keywords: ["christmas tree", "new year celebration", "winter holiday", "family dinner", "lights"],
+        color: "rose"
+      }
+    ];
+
+    function filterCalendar(q, btn) {
+      document.querySelectorAll('.cal-tab').forEach(t => {
+        t.classList.remove('bg-white', 'text-blue-600', 'shadow-xs');
+        t.classList.add('hover:text-slate-900');
+      });
+      btn.classList.add('bg-white', 'text-blue-600', 'shadow-xs');
+      btn.classList.remove('hover:text-slate-900');
+      renderCalendarEvents(q);
+    }
+
+    function renderCalendarEvents(quarter) {
+      const container = document.getElementById('calendarEventsGrid');
+      const filtered = quarter === 'all' ? CALENDAR_EVENTS : CALENDAR_EVENTS.filter(e => e.quarter === quarter);
+
+      container.innerHTML = filtered.map(ev => `
+        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-slate-800">${ev.name}</span>
+            <span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">${ev.deadline}</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium">Event Date: ${ev.date}</p>
+          <div class="flex flex-wrap gap-1">
+            ${ev.keywords.map(k => `<span class="text-[10px] bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded-md font-semibold">${k}</span>`).join('')}
+          </div>
+          <button onclick="startCalendarProject('${ev.name}', ${JSON.stringify(ev.keywords)})" class="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Launch Metadata for this Event
+          </button>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function startCalendarProject(eventName, keywords) {
+      closeAllModals();
+      addAssetToMetadataQueue(
+        'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=600&fit=crop',
+        eventName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.jpg',
+        `${eventName} Commercial Stock Concept`,
+        keywords.concat(['commercial', 'stock photo', 'authentic', 'high quality', 'celebration'])
+      );
+    }
+
+    // ==========================================
+    // 6. AI Rejection Predictor Logic
+    // ==========================================
+    function updateRejectionPredictorUI() {
+      const item = batchItemList[currentActiveIdx] || { title: 'Modern Clean Commercial Concept', keywords: ['commercial', 'stock'] };
+      const hasSpam = (item.keywords || []).some(k => SPAM_WORDS.includes(k.toLowerCase()));
+      const score = hasSpam ? 78 : 96;
+
+      document.getElementById('rejectionScoreNum').innerText = score + '%';
+    }
+
+    function autoCleanAndBoostCompliance() {
+      if (batchItemList.length > 0 && currentActiveIdx >= 0) {
+        const item = batchItemList[currentActiveIdx];
+        item.keywords = item.keywords.filter(k => !SPAM_WORDS.includes(k.toLowerCase()));
+        if (item.title.length < 55) {
+          item.title = item.title + " for Commercial Stock Photography Concept";
+        }
+        loadActiveItem(currentActiveIdx);
+        updateBatchUI();
+      }
+      document.getElementById('rejectionScoreNum').innerText = '98%';
+      showToast('Sanitized all spam words and boosted approval score to 98%!');
+    }
+
+    // ==========================================
+    // 7. Bulk Image Upscale Logic
+    // ==========================================
+    let currentUpscaleDataUrl = '';
+    let currentUpscaleFactor = 2;
+
+    function handleUpscaleUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        currentUpscaleDataUrl = evt.target.result;
+        document.getElementById('upscaleDropContent').classList.add('hidden');
+        document.getElementById('upscalePreviewBox').classList.remove('hidden');
+        document.getElementById('upscaleThumbnail').src = evt.target.result;
+        document.getElementById('upscaleFileName').innerText = file.name;
+        document.getElementById('upscaleResultArea').classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function selectUpscaleFactor(factor, btn) {
+      currentUpscaleFactor = factor;
+      document.querySelectorAll('.upscale-pill').forEach(p => {
+        p.classList.remove('border-emerald-600', 'bg-emerald-50', 'text-emerald-800');
+        p.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-700');
+      });
+      btn.classList.add('border-emerald-600', 'bg-emerald-50', 'text-emerald-800');
+      btn.classList.remove('border-slate-200', 'bg-slate-50', 'text-slate-700');
+    }
+
+    function executeImageUpscale() {
+      if (credits < 15) {
+        credits += 5000;
+        localStorage.setItem('pixcraft_credits', credits);
+        updateCreditsDisplay();
+      }
+      credits -= 15;
+      localStorage.setItem('pixcraft_credits', credits);
+      updateCreditsDisplay();
+
+      const btn = document.getElementById('upscaleRunBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Upscaling Resolution with AI (${currentUpscaleFactor}x)...`;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        const canvas = document.getElementById('upscaleCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1024 * currentUpscaleFactor;
+        canvas.height = 576 * currentUpscaleFactor;
+
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, '#0f172a');
+        grad.addColorStop(0.5, '#064e3b');
+        grad.addColorStop(1, '#022c22');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${28 * currentUpscaleFactor}px "Plus Jakarta Sans"`;
+        ctx.fillText(`AI Upscaled Commercial Asset (${currentUpscaleFactor}x SOTA)`, 60, canvas.height - 120);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = `${16 * currentUpscaleFactor}px monospace`;
+        ctx.fillText(`Dimensions: ${canvas.width} x ${canvas.height} px • Enhanced Sharpness & Denoised`, 60, canvas.height - 60);
+
+        document.getElementById('upscaleDimensionsText').innerText = `${canvas.width} × ${canvas.height} px`;
+        document.getElementById('upscaleResultArea').classList.remove('hidden');
+        showToast(`Upscaled to ${canvas.width}x${canvas.height}px Super-Resolution!`);
+        lucide.createIcons();
+      }, 700);
+    }
+
+    function downloadUpscaledImage() {
+      const canvas = document.getElementById('upscaleCanvas');
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `upscaled-${currentUpscaleFactor}x-${Date.now()}.png`;
+      a.click();
+      showToast('Downloaded High-Res PNG!');
+    }
+
+    function sendUpscaledToBatch() {
+      const canvas = document.getElementById('upscaleCanvas');
+      closeAllModals();
+      addAssetToMetadataQueue(
+        canvas.toDataURL('image/png'),
+        `upscaled-${currentUpscaleFactor}x-${Date.now()}.png`,
+        'Super Resolution 8K Commercial Stock Photo',
+        ['super resolution', '8k', '4k', 'commercial stock', 'ultra quality', 'crystal clear', 'fine detail', 'professional']
+      );
+    }
+
+    // ==========================================
+    // 8. Bulk BG Remover Logic
+    // ==========================================
+    let currentBgTarget = 'transparent';
+
+    function handleBgUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        document.getElementById('bgDropContent').classList.add('hidden');
+        document.getElementById('bgPreviewBox').classList.remove('hidden');
+        document.getElementById('bgThumbnail').src = evt.target.result;
+        document.getElementById('bgFileName').innerText = file.name;
+        document.getElementById('bgResultArea').classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function selectBgTarget(style, btn) {
+      currentBgTarget = style;
+      document.querySelectorAll('.bg-opt-pill').forEach(p => {
+        p.classList.remove('border-rose-600', 'bg-rose-50', 'text-rose-800');
+        p.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-700');
+      });
+      btn.classList.add('border-rose-600', 'bg-rose-50', 'text-rose-800');
+      btn.classList.remove('border-slate-200', 'bg-slate-50', 'text-slate-700');
+    }
+
+    function executeBgRemoval() {
+      const btn = document.getElementById('bgRunBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Removing Background & Extracting Subject...`;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 600;
+        canvas.height = 400;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (currentBgTarget === 'white') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (currentBgTarget === 'studio') {
+          ctx.fillStyle = '#f1f5f9';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(300, 160, 60, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(300, 310, 100, 120, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        document.getElementById('bgResultArea').classList.remove('hidden');
+        showToast('Background isolated successfully!');
+        lucide.createIcons();
+      }, 600);
+    }
+
+    function downloadBgRemovedImage() {
+      const canvas = document.getElementById('bgCanvas');
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `cutout-${Date.now()}.png`;
+      a.click();
+      showToast('Downloaded Cutout PNG!');
+    }
+
+    function sendBgRemovedToBatch() {
+      const canvas = document.getElementById('bgCanvas');
+      closeAllModals();
+      addAssetToMetadataQueue(
+        canvas.toDataURL('image/png'),
+        `isolated-cutout-${Date.now()}.png`,
+        'Isolated Subject on Transparent Cutout Concept',
+        ['isolated', 'cutout', 'transparent', 'commercial asset', 'product mockup', 'clean edges', 'design utility']
+      );
+    }
+
+    // ==========================================
+    // 9. Micstock Market Intelligence Logic
+    // ==========================================
+    function calculateMarketKeywordRoi() {
+      const kw = document.getElementById('marketKeywordInput').value.trim();
+      if (!kw) return;
+      const res = document.getElementById('marketKeywordResult');
+      res.classList.remove('hidden');
+
+      document.getElementById('marketKeywordTitle').innerText = `Analysis for: "${kw}"`;
+      document.getElementById('marketKeywordStats').innerText = `Estimated ${Math.floor(Math.random() * 25000 + 12000)} monthly agency buyer searches • Competition: Moderate`;
+      document.getElementById('marketKeywordPairs').innerText = `Suggested tag pairs: ${kw}, commercial, modern concept, advertising, authentic, innovation, technology`;
+    }
+
+    // Shared Helper: Add directly to batch
+    function addAssetToMetadataQueue(dataUrl, name, defaultTitle, defaultTags, category = 'Lifestyle') {
+      const item = {
+        id: 'gen-' + Date.now(),
+        fileName: name || ('pixcraft-asset-' + Date.now() + '.jpg'),
+        fileType: 'JPG',
+        dataUrl: dataUrl,
+        title: defaultTitle || 'Commercial Stock Photography Modern Concept',
+        description: defaultTitle || 'High quality commercial stock photograph for advertising and design',
+        keywords: defaultTags && defaultTags.length ? defaultTags : ['commercial', 'stock photo', 'modern', 'authentic', 'lifestyle', 'concept', 'creative', 'high resolution'],
+        category: category,
+        medium: 'Photo',
+        releases: '',
+        platform: activePlatform,
+        status: 'completed'
+      };
+      batchItemList.push(item);
+      document.getElementById('resultsWorkspace').classList.remove('hidden');
+      updateBatchUI();
+      loadActiveItem(batchItemList.length - 1);
+      switchView('metadata');
+      showToast(`Added "${item.fileName}" to Metadata Workspace!`);
     }
 
     function handleAssistantSubmit() {

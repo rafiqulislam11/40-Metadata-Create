@@ -39,25 +39,22 @@ A professional, high-throughput microstock SEO metadata suite inspired by [PixCr
 - **Fast Built-in Heuristic Mode**: Instant offline generation when no API key is provided, generating compliant titles, descriptions, and 48 ranked tags with zero lag.
 - **Built-in API Key Tester**: Direct "Test Connection" button in the settings modal.
 
-### 5. 🛠️ Batch Operations Suite
-- **Apply Keywords to All**: Quickly inject campaign tags (e.g. `summer, travel, vacation`) to every asset in the queue.
-- **Set Category for All**: One-click bulk category assignment.
-- **Remove Keyword from All**: Clean unwanted tags across the entire session.
-- **Single Asset Removal**: Delete individual photos without losing the rest of your batch.
+### 5. 🛠️ Complete PixcraftAI Creative Suite Tools
+1. **Metadata Generation Suite**: High-throughput microstock tagging and title generator with Top 10 keyword weighting and CSV exports.
+2. **Image2Prompt Generator**: Reverse-engineer Midjourney v6.1, Flux.1, and SDXL production prompts from existing images.
+3. **AI Image Generation Studio**: Built-in canvas text-to-image generator with style presets, aspect ratio controls, and direct 1-click addition to metadata batch queue.
+4. **Commercial Prompt Architect**: Generates 3 high-yield commercial stock prompts optimized for high download volume.
+5. **AI Batch Editor**: Comprehensive batch operations: Find & Replace keywords, prefix/suffix titles, bulk tag injection, and category/medium setters.
+6. **2026 Microstock Event Calendar**: 12-month seasonal opportunities with 90-day early submission guidelines and 1-click project initialization.
+7. **AI Rejection Predictor**: Pre-screens assets for trademark/IP infringement, spam buzzwords, title front-loading, and technical sharpness.
+8. **Bulk Image Upscaler**: 2x, 4x, 8x Super-Resolution studio with clarity enhancement, noise reduction, and high-res PNG export.
+9. **Bulk BG Remover**: Alpha matte background isolator for transparent PNGs and pure white stock cutouts.
+10. **Microstock Market Intelligence**: Live agency commission breakdowns (Adobe Stock, Shutterstock, Freepik, Vecteezy) and keyword commercial demand estimator.
 
-### 6. 📊 Real-time SEO Quality Score Meter
-- Dynamic compliance score (0–100%) with instant checklist:
-  - Title length check (55–75 chars optimal).
-  - Tag count check (35–48 tags optimal).
-  - Spam word detector (`isolated on white`, `stunning`, `4k`, `copyspace`, etc.).
-  - Category assignment check.
-
-### 7. 🏷️ Top 10 Ranked Keyword Manager
-- Blue-badged Top 10 tags representing prime ranking positions.
-- **Promote Button (`▲`)** on every tag to boost lower-ranked keywords into the Top 10 tier.
-- **Move Down Button (`▼`)** and quick delete (`×`).
-- **Comma-Separated Paste Support**: Paste `tag1, tag2, tag3` to import automatically.
-- **Add to Top 10**: Prepend high-priority keywords directly to position #1.
+### 6. 📱 All-Device Responsive Design
+- **Mobile First & Fully Adaptive**: Tested and optimized for mobile screens (320px–480px), tablets (640px–1024px), and ultra-wide desktops.
+- **Touch-Friendly Controls**: Minimum 44px touch targets, non-overflowing flex containers, horizontal smooth carousels, and responsive modal viewports.
+- **Universal Modal Architecture**: Scrollable dialogs with backdrop click dismissal and Escape key handlers.
 
 ### 8. 📦 Multi-Agency Ready CSV Exports
 - **Adobe Stock CSV**: `Filename,Title,Keywords,Category,Releases`
