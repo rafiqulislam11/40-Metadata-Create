@@ -4553,7 +4553,8 @@ Use clean markdown with bullet points and bold highlights.`;
 
     function formatCsvKeywords(keywordsArray, maxCount = 49) {
       const cleanList = cleanStockKeywords(keywordsArray, maxCount);
-      return `"${cleanList.join(', ')}"`;
+      // Strictly comma-separated without trailing spaces, wrapped in quotes per Shutterstock & Adobe standards
+      return `"${cleanList.join(',')}"`;
     }
 
     function downloadCsvFile(csvContent, filename) {
@@ -5366,11 +5367,9 @@ CRITICAL RULES:
       const fn = formatCsvCell(it.fileName);
       const title = formatCsvCell(it.title, { isTitle: true });
       const kw = formatCsvKeywords(it.keywords, 49);
-      const cat = formatCsvCell(it.category || 'Lifestyle');
-      const rel = formatCsvCell(it.releases || '');
-      const row = `${fn},${title},${kw},${cat},${rel}\r\n`;
+      const row = `${fn},${title},${kw}\r\n`;
       clipboardSafeCopy(row);
-      showToast('CSV Row copied!');
+      showToast('CSV Row copied (Filename, Title, Keywords)!');
     }
 
     function copyAllCsvToClipboard() {
@@ -5378,17 +5377,15 @@ CRITICAL RULES:
         showToast('No assets to copy');
         return;
       }
-      let csv = "Filename,Title,Keywords,Category,Releases\r\n";
+      let csv = '"Filename","Title","Keywords"\r\n';
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
         const kw = formatCsvKeywords(it.keywords, 49);
-        const cat = formatCsvCell(it.category || 'Lifestyle');
-        const rel = formatCsvCell(it.releases || '');
-        csv += `${fn},${title},${kw},${cat},${rel}\r\n`;
+        csv += `${fn},${title},${kw}\r\n`;
       });
       clipboardSafeCopy(csv);
-      showToast(`Copied all ${batchItemList.length} rows to clipboard!`);
+      showToast(`Copied all ${batchItemList.length} rows to clipboard ("Filename","Title","Keywords")!`);
     }
 
     async function clipboardSafeCopy(text) {
@@ -5495,29 +5492,30 @@ CRITICAL RULES:
 
     function getShutterstockCategory(catName) {
       const map = {
-        'Lifestyle': 'People',
-        'People': 'People',
-        'Business': 'Business/Finance',
-        'Technology': 'Technology',
+        'Graphic Resources': 'Backgrounds/Textures,Abstract',
+        'Abstract': 'Abstract,Backgrounds/Textures',
+        'Landscapes': 'Nature,Parks/Outdoor',
+        'Landscape': 'Nature,Parks/Outdoor',
+        'The Environment': 'Nature,Backgrounds/Textures',
+        'Lifestyle': 'People,Lifestyle',
+        'People': 'People,Lifestyle',
+        'Business': 'Business/Finance,Technology',
+        'Technology': 'Technology,Business/Finance',
         'Food': 'Food and Drink',
         'Drinks': 'Food and Drink',
-        'Animals': 'Animals/Wildlife',
-        'Buildings and Architecture': 'Buildings/Landmarks',
-        'Landscapes': 'Nature',
-        'Landscape': 'Nature',
-        'The Environment': 'Nature',
-        'Graphic Resources': 'Backgrounds/Textures',
+        'Animals': 'Animals/Wildlife,Nature',
+        'Buildings and Architecture': 'Buildings/Landmarks,Architecture',
         'Hobbies and Leisure': 'Sports/Recreation',
-        'Industry': 'Industrial',
-        'Plants and Flowers': 'Nature',
-        'Science': 'Science',
-        'Social Issues': 'Miscellaneous',
+        'Industry': 'Industrial,Technology',
+        'Plants and Flowers': 'Nature,Parks/Outdoor',
+        'Science': 'Science,Technology',
+        'Social Issues': 'Miscellaneous,People',
         'Sports': 'Sports/Recreation',
         'Transport': 'Transportation',
         'Transportation': 'Transportation',
-        'Travel': 'Parks/Outdoor'
+        'Travel': 'Parks/Outdoor,Holidays'
       };
-      return map[catName] || 'Miscellaneous';
+      return map[catName] || 'Backgrounds/Textures,Abstract';
     }
 
     function downloadAdobeStockCsv() {
@@ -5526,19 +5524,19 @@ CRITICAL RULES:
         return;
       }
 
-      // Adobe Stock CSV specification: Category must be an integer (1 to 21) or blank.
-      let csv = "Filename,Title,Keywords,Category,Releases\r\n";
+      // Adobe Stock CSV specification: "Filename","Title","Keywords","Category","Releases"
+      let csv = '"Filename","Title","Keywords","Category","Releases"\r\n';
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
         const kw = formatCsvKeywords(it.keywords, 49);
         const catNum = getAdobeCategoryNumber(it.category);
         const rel = formatCsvCell(it.releases || '');
-        csv += `${fn},${title},${kw},${catNum},${rel}\r\n`;
+        csv += `${fn},${title},${kw},"${catNum}",${rel}\r\n`;
       });
 
       downloadCsvFile(csv, `adobe_stock_metadata_${Date.now()}.csv`);
-      showToast('Official Adobe Stock CSV Downloaded (1-21 Category ID Protected)!');
+      showToast('Official Adobe Stock CSV Downloaded!');
     }
 
     function downloadShutterstockCsv() {
@@ -5547,18 +5545,22 @@ CRITICAL RULES:
         return;
       }
 
-      // Shutterstock CSV specification: Description min 5 words, Categories must be official Shutterstock 26 categories.
-      let csv = "Filename,Description,Keywords,Categories\r\n";
+      // Shutterstock official format: "Filename","Description","Keywords","Categories"
+      let csv = '"Filename","Description","Keywords","Categories"\r\n';
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
-        const desc = formatCsvCell(it.description || it.title, { isTitle: true });
-        const kw = formatCsvKeywords(it.keywords, 50);
+        let descText = it.description || it.title;
+        if (!descText || descText.split(/\s+/).length < 6) {
+          descText = `This image features ${it.title.toLowerCase()}, creating a clean and professional background composition.`;
+        }
+        const desc = formatCsvCell(descText, { isDesc: true });
+        const kw = formatCsvKeywords(it.keywords, 49);
         const cat = formatCsvCell(getShutterstockCategory(it.category));
         csv += `${fn},${desc},${kw},${cat}\r\n`;
       });
 
       downloadCsvFile(csv, `shutterstock_metadata_${Date.now()}.csv`);
-      showToast('Shutterstock CSV Downloaded (Official 26 Categories Protected)!');
+      showToast('Shutterstock Official 4-Column CSV Downloaded!');
     }
 
     function downloadFreepikCsv() {
@@ -5567,16 +5569,17 @@ CRITICAL RULES:
         return;
       }
 
-      let csv = "Filename,Title,Keywords\r\n";
+      // Freepik / Standard 3-column format: "Filename","Title","Keywords"
+      let csv = '"Filename","Title","Keywords"\r\n';
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
-        const kw = formatCsvKeywords(it.keywords, 50);
+        const kw = formatCsvKeywords(it.keywords, 49);
         csv += `${fn},${title},${kw}\r\n`;
       });
 
       downloadCsvFile(csv, `freepik_metadata_${Date.now()}.csv`);
-      showToast('Freepik CSV Downloaded (UTF-8 Protected)!');
+      showToast('Freepik & Microstock 3-Column CSV Downloaded!');
     }
 
     function downloadVecteezyCsv() {
@@ -5585,17 +5588,18 @@ CRITICAL RULES:
         return;
       }
 
-      let csv = "Filename,Title,Description,Keywords\r\n";
+      // Vecteezy 4-column format: "Filename","Title","Description","Keywords"
+      let csv = '"Filename","Title","Description","Keywords"\r\n';
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
         const desc = formatCsvCell(it.description || it.title, { isDesc: true });
-        const kw = formatCsvKeywords(it.keywords, 50);
+        const kw = formatCsvKeywords(it.keywords, 49);
         csv += `${fn},${title},${desc},${kw}\r\n`;
       });
 
       downloadCsvFile(csv, `vecteezy_metadata_${Date.now()}.csv`);
-      showToast('Vecteezy CSV Downloaded (UTF-8 Protected)!');
+      showToast('Vecteezy & Universal 4-Column CSV Downloaded!');
     }
 
     function downloadUniversalCsv() {
@@ -5604,20 +5608,22 @@ CRITICAL RULES:
         return;
       }
 
-      let csv = "Filename,Title,Description,Keywords,Category,Medium,Releases\r\n";
+      // Universal 4-column format: "Filename","Title","Description","Keywords"
+      let csv = '"Filename","Title","Description","Keywords"\r\n';
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
-        const desc = formatCsvCell(it.description || it.title, { isDesc: true });
+        let descText = it.description || it.title;
+        if (!descText || descText.split(/\s+/).length < 6) {
+          descText = `This image features ${it.title.toLowerCase()}, creating a high quality visual asset for commercial design.`;
+        }
+        const desc = formatCsvCell(descText, { isDesc: true });
         const kw = formatCsvKeywords(it.keywords, 49);
-        const cat = formatCsvCell(it.category || 'Lifestyle');
-        const med = formatCsvCell(it.medium || 'Photo');
-        const rel = formatCsvCell(it.releases || '');
-        csv += `${fn},${title},${desc},${kw},${cat},${med},${rel}\r\n`;
+        csv += `${fn},${title},${desc},${kw}\r\n`;
       });
 
       downloadCsvFile(csv, `universal_stock_metadata_${Date.now()}.csv`);
-      showToast('Universal Microstock CSV Downloaded (UTF-8 Protected)!');
+      showToast('Universal 4-Column Microstock CSV Downloaded!');
     }
 
     function downloadProjectZip() {
