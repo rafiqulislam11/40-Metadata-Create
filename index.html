@@ -4170,11 +4170,45 @@ Use clean markdown with bullet points and bold highlights.`;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
 
+            // Fast visual color & composition analysis
+            let avgR = 128, avgG = 128, avgB = 128, brightness = 128;
+            try {
+              const sampleW = Math.min(w, 40);
+              const sampleH = Math.min(h, 40);
+              const sampleCanvas = document.createElement('canvas');
+              sampleCanvas.width = sampleW;
+              sampleCanvas.height = sampleH;
+              const sCtx = sampleCanvas.getContext('2d');
+              sCtx.drawImage(canvas, 0, 0, sampleW, sampleH);
+              const imgData = sCtx.getImageData(0, 0, sampleW, sampleH).data;
+              let totalR = 0, totalG = 0, totalB = 0, count = 0;
+              for (let p = 0; p < imgData.length; p += 16) {
+                totalR += imgData[p];
+                totalG += imgData[p + 1];
+                totalB += imgData[p + 2];
+                count++;
+              }
+              if (count > 0) {
+                avgR = Math.round(totalR / count);
+                avgG = Math.round(totalG / count);
+                avgB = Math.round(totalB / count);
+                brightness = Math.round((avgR * 299 + avgG * 587 + avgB * 114) / 1000);
+              }
+            } catch (err) {}
+
+            const visualMeta = {
+              avgR, avgG, avgB, brightness,
+              isWide: w > h * 1.15,
+              isTall: h > w * 1.15,
+              isSquare: Math.abs(w - h) <= 60
+            };
+
             const fastBase64 = canvas.toDataURL('image/jpeg', 0.82);
             resolve({
               displayUrl: e.target.result,
               base64Data: fastBase64.split(',')[1],
-              mimeType: 'image/jpeg'
+              mimeType: 'image/jpeg',
+              visualMeta: visualMeta
             });
           };
           img.onerror = () => {
@@ -4289,14 +4323,20 @@ Use clean markdown with bullet points and bold highlights.`;
           updateBatchThumbnail(itemIdx);
 
           try {
-            const { displayUrl, base64Data, mimeType } = await prepareFastImageForAI(item.file);
+            const { displayUrl, base64Data, mimeType, visualMeta } = await prepareFastImageForAI(item.file);
             item.dataUrl = displayUrl;
+            item.visualMeta = visualMeta;
 
             let meta;
             if (userApiKey && userApiKey.trim()) {
-              meta = await fetchStockMetadataWithGemini(base64Data, mimeType, item.fileName);
+              try {
+                meta = await fetchStockMetadataWithGemini(base64Data, mimeType, item.fileName);
+              } catch (apiErr) {
+                console.warn(`Gemini Vision AI fallback for ${item.fileName}:`, apiErr.message);
+                meta = generateSmartFallbackMetadata(item.fileName, itemIdx, visualMeta);
+              }
             } else {
-              meta = generateSmartFallbackMetadata(item.fileName, itemIdx);
+              meta = generateSmartFallbackMetadata(item.fileName, itemIdx, visualMeta);
             }
 
             item.title = cleanStockTitle(meta.title);
@@ -4305,8 +4345,8 @@ Use clean markdown with bullet points and bold highlights.`;
             item.category = meta.category || item.category;
             item.status = 'done';
           } catch (err) {
-            console.warn(`Vision AI fallback for ${item.fileName}:`, err);
-            const fallback = generateSmartFallbackMetadata(item.fileName, itemIdx);
+            console.warn(`Batch worker fallback for ${item.fileName}:`, err);
+            const fallback = generateSmartFallbackMetadata(item.fileName, itemIdx, item.visualMeta);
             if (!item.dataUrl) {
               item.dataUrl = await readFileDataUrl(item.file);
             }
@@ -4534,35 +4574,58 @@ Use clean markdown with bullet points and bold highlights.`;
       }
     }
 
+    function extractJsonFromModelResponse(rawText) {
+      if (!rawText) return null;
+      try {
+        return JSON.parse(rawText);
+      } catch (e) {}
+
+      let cleaned = String(rawText).trim();
+      // Match markdown code block ```json ... ``` or ``` ... ```
+      const match = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (match && match[1]) {
+        try {
+          return JSON.parse(match[1].trim());
+        } catch (e) {}
+      }
+
+      // Outermost { ... }
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        try {
+          return JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
+        } catch (e) {}
+      }
+      return null;
+    }
+
     async function fetchStockMetadataWithGemini(base64Image, mimeType, fileName) {
       const criteria = PLATFORM_CRITERIA[activePlatform] || PLATFORM_CRITERIA['Adobe Stock'];
 
       const promptInstructions = `You are an elite microstock contributor and ${activePlatform || 'Adobe Stock'} SEO search ranking specialist.
-Thoroughly inspect every visual detail of this image (Filename: "${fileName}").
+Examine every visual detail of this specific image (Filename: "${fileName}").
 Look closely at:
-1. Exact primary subject, person (age, ethnicity, attire, role), object, animal, food, or landscape.
-2. Exact action, posture, expression, or activity taking place.
-3. Setting, background, architectural environment, indoor/outdoor lighting conditions (golden hour, studio light, cinematic).
-4. Concept, emotion, commercial utility, advertising themes.
+1. Exact primary subject: Identify the focal subject (e.g., person, object, animal, food, architecture, nature, or technology).
+2. Action, emotion, posture, and composition: What is happening in the scene?
+3. Lighting, color palette, environment, setting: (e.g. golden hour, studio light, natural sunlight, urban street, rustic interior).
+4. Stock utility: Why would an advertiser or publisher buy this specific visual asset?
 
-Marketplace Rules:
-${criteria.rules}
+Provide unique, diverse, and front-loaded stock metadata for THIS SPECIFIC IMAGE.
 
-Key requirements for ${activePlatform || 'Adobe Stock'}:
-1. Title: Front-loaded with the most specific subject (e.g., "Senior physician examining digital tablet with patient in modern hospital").
-   CRITICAL TITLE RULES:
-   - Must be a 100% COMPLETE, natural, grammatically correct full sentence.
-   - Absolutely NEVER use ellipsis ("..."), double dots (".."), or trailing dots.
-   - NEVER truncate or cut off words at the end.
-   - Target length: 60 to 85 characters of natural, complete English text.
-   - No spam buzzwords (do NOT use "isolated", "stunning", "beautiful", "4k", "copyspace").
-2. First 10 Keywords: Adobe Stock assigns 80% search ranking weight to tags 1 to 10. They MUST represent:
-   - Tags 1-3: Exact primary subject & noun.
-   - Tags 4-6: Main action, activity, or core visual feature.
-   - Tags 7-10: Primary setting, environment, and specific emotion/style.
-3. Tags 11-48: Synonyms, visual attributes, copy space, composition, lighting, design concepts.
-4. Total tags: Exactly 46 to 48 distinct keywords, all lowercase, single words or short 2-word terms, no trademarks.
-5. Category: Choose one exact Adobe Stock category: Lifestyle, Business, People, Technology, The Environment, Landscapes, Food, Animals, Buildings and Architecture, Graphic Resources, Hobbies and Leisure, Industry, Plants and Flowers, Science, Social Issues, Sports, Transport, Travel.`;
+Respond ONLY with a valid JSON object formatted as:
+{
+  "title": "Front-loaded descriptive title, 60-80 chars, 100% complete full sentence, no ellipsis, no spam words",
+  "description": "Detailed descriptive sentence about this specific subject and commercial context",
+  "keywords": ["tag1", "tag2", "tag3", ..., "tag48"],
+  "category": "Exact Adobe Stock category"
+}
+
+CRITICAL RULES:
+- The first 10 keywords MUST be the most specific terms representing this exact image's subject, action, and setting.
+- Total keywords must be 46 to 48 unique, highly relevant tags.
+- Title must be front-loaded with the exact subject and be completely unique for this photo.
+- Do NOT output generic filler. Every tag must be relevant to what is visible in the photo.`;
 
       const payload = {
         contents: [
@@ -4572,7 +4635,7 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
               { text: promptInstructions },
               {
                 inlineData: {
-                  mimeType: mimeType,
+                  mimeType: mimeType || 'image/jpeg',
                   data: base64Image
                 }
               }
@@ -4581,32 +4644,18 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
         ],
         generationConfig: {
           responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              "title": { "type": "STRING" },
-              "description": { "type": "STRING" },
-              "keywords": {
-                "type": "ARRAY",
-                "items": { "type": "STRING" }
-              },
-              "category": { "type": "STRING" }
-            },
-            "required": ["title", "description", "keywords", "category"],
-            "propertyOrdering": ["title", "description", "keywords", "category"]
-          },
-          temperature: 0.2
+          temperature: 0.4
         }
       };
 
       const apiKey = userApiKey.trim();
       const primaryModel = selectedModel || 'gemini-3.8-flash';
-      const candidateModels = [primaryModel, 'gemini-3.8-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-flash'].filter((v, i, a) => a.indexOf(v) === i);
+      const candidateModels = [primaryModel, 'gemini-3.8-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'].filter((v, i, a) => a.indexOf(v) === i);
 
       for (const model of candidateModels) {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         const maxRetries = 2;
-        let delay = 1000;
+        let delay = 1200;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
@@ -4618,21 +4667,21 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
 
             if (!response.ok) {
               if (response.status === 429) {
-                console.warn(`Model ${model} hit rate limit / quota, attempting fallback candidate model...`);
+                console.warn(`Model ${model} hit rate limit, cooling down 1.5s...`);
+                await new Promise(r => setTimeout(r, 1500));
                 break;
               }
-              if (response.status >= 400 && response.status < 500) {
-                throw new Error(`API client error ${response.status}`);
-              }
-              throw new Error(`API status ${response.status}`);
+              const errJson = await response.json().catch(() => ({}));
+              console.warn(`Gemini API error on ${model}:`, errJson);
+              break;
             }
 
             const resJson = await response.json();
             const rawText = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!rawText) throw new Error('Empty response from model');
 
-            const parsed = JSON.parse(rawText);
-            if (parsed.title && Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
+            const parsed = extractJsonFromModelResponse(rawText);
+            if (parsed && parsed.title && Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
               if (model !== selectedModel) {
                 selectedModel = model;
                 localStorage.setItem('pixcraft_selected_model', model);
@@ -4647,7 +4696,7 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
             }
             throw new Error('Incomplete JSON data returned');
           } catch (e) {
-            if (attempt === maxRetries || e.message.includes('API client error')) break;
+            if (attempt === maxRetries) break;
             await new Promise(r => setTimeout(r, delay));
             delay *= 2;
           }
@@ -4656,67 +4705,217 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
       throw new Error('All candidate models exhausted or rate-limited');
     }
 
-    function generateSmartFallbackMetadata(filename, seedIndex = 0) {
+    function generateSmartFallbackMetadata(filename, seedIndex = 0, visualMeta = null) {
       const cleanName = filename.replace(/\.[^/.]+$/, "").replace(/[._\-0-9]+/g, " ").trim();
       const rawWords = cleanName.split(/\s+/).filter(w => w.length > 2);
-      const isGenericName = rawWords.length === 0 || rawWords.every(w => /^(img|dsc|pic|photo|image|dcim|screenshot|untitled|asset|raw|capture|file|sam)$/i.test(w));
-      
-      const themes = [
-        { subject: "Modern Lifestyle and Everyday Wellbeing", category: "Lifestyle", tag1: "lifestyle", tag2: "contemporary", tag3: "everyday life", tag4: "wellbeing", tag5: "person" },
-        { subject: "Professional Business Corporate Strategy", category: "Business", tag1: "business", tag2: "professional", tag3: "corporate", tag4: "office", tag5: "strategy" },
-        { subject: "Creative Studio Design Visual Composition", category: "Graphic Resources", tag1: "creative", tag2: "minimalist", tag3: "studio shot", tag4: "artistic", tag5: "elegance" },
-        { subject: "Commercial Advertising Product and Brand Asset", category: "Business", tag1: "marketing", tag2: "advertising", tag3: "commercial", tag4: "branding", tag5: "product" },
-        { subject: "Scenic Nature Landscape with Natural Sunlight", category: "Landscapes", tag1: "nature", tag2: "scenic", tag3: "environment", tag4: "organic", tag5: "landscape" },
-        { subject: "High Technology Innovation and Digital Connectivity", category: "Technology", tag1: "technology", tag2: "innovation", tag3: "futuristic", tag4: "digital", tag5: "network" },
-        { subject: "Gourmet Delicious Culinary Food Presentation", category: "Food", tag1: "food", tag2: "delicious", tag3: "gourmet", tag4: "culinary", tag5: "fresh" },
-        { subject: "International Travel Adventure and Cultural Tourism", category: "Travel", tag1: "travel", tag2: "vacation", tag3: "tourism", tag4: "destination", tag5: "journey" }
+      const isGenericName = rawWords.length === 0 || rawWords.every(w => /^(img|dsc|pic|photo|image|dcim|screenshot|untitled|asset|raw|capture|file|sam|p|sample)$/i.test(w));
+
+      // Rich diverse category profiles to guarantee every photo has UNIQUE metadata
+      const nicheCatalog = [
+        {
+          key: "coffee_culinary",
+          patterns: [/coffee|latte|cappuccino|barista|cafe|cup|mug|brew|espresso/i],
+          category: "Food",
+          subjects: ["Artisan Roasted Coffee Cup with Creamy Latte Art", "Freshly Brewed Hot Coffee in Modern Cafe Setting", "Aromatic Espresso Beans and Steaming Ceramic Cup"],
+          titles: [
+            "Freshly Brewed Artisan Coffee Cup on Rustic Cafe Table",
+            "Barista Preparing Creamy Latte with Delicate Foam Art",
+            "Morning Coffee Cup beside Organic Dark Roasted Beans",
+            "Aromatic Gourmet Espresso in Contemporary Coffee Shop"
+          ],
+          primaryTags: ["coffee", "latte art", "espresso", "barista", "cafe", "cappuccino", "brew", "roasted beans", "hot drink", "morning beverage", "ceramic mug", "coffee shop", "creamy foam", "aromatic", "caffeine"]
+        },
+        {
+          key: "business_corporate",
+          patterns: [/business|office|meeting|corporate|worker|strategy|finance|startup/i],
+          category: "Business",
+          subjects: ["Diverse Professional Corporate Team in Strategic Meeting", "Business Executives Analyzing Financial Market Data", "Modern Tech Office Workspace with Focused Colleagues"],
+          titles: [
+            "Corporate Business Team Discussing Project Strategy in Office",
+            "Confident Executive Presenting Financial Growth Statistics",
+            "Diverse Colleagues Collaborating in Contemporary Conference Room",
+            "Modern Professional Workplace with Active Brainstorming Session"
+          ],
+          primaryTags: ["business", "corporate", "teamwork", "office meeting", "strategy", "executive", "professional", "colleagues", "conference room", "financial", "leadership", "workplace", "discussion", "planning", "success"]
+        },
+        {
+          key: "nature_green",
+          patterns: [/nature|forest|tree|leaf|plant|garden|green|flora|botanical/i],
+          category: "The Environment",
+          subjects: ["Lush Evergreen Forest with Sunlight Filtering Through Foliage", "Botanical Green Leaves with Fresh Natural Morning Dew", "Serene Woodland Landscape with Vibrant Natural Flora"],
+          titles: [
+            "Sunlight Filtering Through Lush Evergreen Forest Canopy",
+            "Fresh Green Botanical Leaves with Morning Dew Drops",
+            "Scenic Natural Woodland Trail Surrounded by Tall Trees",
+            "Vibrant Tropical Foliage in Pristine Eco Environment"
+          ],
+          primaryTags: ["nature", "forest", "foliage", "green leaves", "woodland", "sunlight", "trees", "botanical", "ecology", "environment", "fresh air", "organic", "wilderness", "serene", "canopy"]
+        },
+        {
+          key: "landscape_travel",
+          patterns: [/landscape|mountain|lake|sky|cloud|sea|beach|ocean|travel|sunset|sunrise/i],
+          category: "Landscapes",
+          subjects: ["Majestic Mountain Peak under Golden Sunset Sky", "Tranquil Ocean Waves Gently Crashing on Sandy Beach", "Panoramic Alpine Lake Reflection with Dramatic Clouds"],
+          titles: [
+            "Majestic Mountain Horizon under Warm Golden Sunset Sky",
+            "Tranquil Turquoise Ocean Waves along Pristine Sandy Beach",
+            "Scenic Panoramic Lake Reflection with Dramatic Cloudscape",
+            "Breathtaking Alpine Vista during Peaceful Evening Twilight"
+          ],
+          primaryTags: ["landscape", "mountain", "sunset sky", "ocean view", "scenic vista", "horizon", "lake reflection", "golden hour", "cloudscape", "travel destination", "wilderness", "peaceful", "tranquil", "panorama", "outdoors"]
+        },
+        {
+          key: "food_gourmet",
+          patterns: [/food|dish|meal|fruit|vegetable|cake|dessert|pizza|salad|kitchen|cook|chef/i],
+          category: "Food",
+          subjects: ["Gourmet Culinary Dish Prepared with Fresh Organic Ingredients", "Delicious Healthy Mediterranean Salad on Wooden Table", "Artisan Bakery Pastry with Sweet Confectionery Toppings"],
+          titles: [
+            "Gourmet Culinary Meal Plated with Fresh Seasonal Ingredients",
+            "Healthy Organic Mediterranean Salad on Rustic Wooden Board",
+            "Artisan Bakery Delicacy Freshly Baked in Gourmet Kitchen",
+            "Delicious Savory Cuisine Presentation for Restaurant Menu"
+          ],
+          primaryTags: ["food", "gourmet", "culinary", "healthy meal", "fresh ingredients", "delicious", "restaurant dish", "organic", "recipe", "appetizer", "diet", "nutrition", "tasty", "gastronomy", "presentation"]
+        },
+        {
+          key: "technology_digital",
+          patterns: [/tech|computer|laptop|code|cyber|digital|network|data|screen|mobile|phone/i],
+          category: "Technology",
+          subjects: ["Futuristic Digital Interface with Data Analytics Visuals", "Software Engineer Typing Code on High Performance Laptop", "Advanced Cloud Network Connectivity and Cyber Security"],
+          titles: [
+            "Software Developer Working on Complex Code in Modern Studio",
+            "Futuristic Digital Data Stream with Glowing Network Grid",
+            "Advanced Cloud Computing Technology for Secure Enterprise",
+            "Modern Cyber Security Dashboard with High Speed Connectivity"
+          ],
+          primaryTags: ["technology", "digital network", "data analytics", "software development", "cyber security", "cloud computing", "computer code", "futuristic", "innovation", "connectivity", "programming", "hardware", "screen", "digital transformation", "ai"]
+        },
+        {
+          key: "people_lifestyle",
+          patterns: [/people|person|woman|man|girl|boy|portrait|smile|happy|friend|family/i],
+          category: "People",
+          subjects: ["Cheerful Smiling Person in Bright Contemporary Setting", "Joyful Young Adult Relaxing in Cozy Modern Living Room", "Authentic Portrait of Confident Individual Looking at Camera"],
+          titles: [
+            "Cheerful Young Woman Smiling Warmly in Natural Sunlight",
+            "Confident Professional Portrait in Contemporary Studio Setting",
+            "Joyful Friends Enjoying Relaxed Weekend Lifestyle Indoors",
+            "Authentic Modern Person Expressing Positive Energy and Vitality"
+          ],
+          primaryTags: ["people", "portrait", "happy person", "smiling", "lifestyle", "positive emotion", "authentic", "individual", "wellbeing", "vitality", "confidence", "daylight", "youth", "modern living", "casual"]
+        },
+        {
+          key: "architecture_interior",
+          patterns: [/building|house|home|interior|architecture|room|urban|city|structure|facade/i],
+          category: "Buildings and Architecture",
+          subjects: ["Modern Minimalist Architecture with Clean Geometric Lines", "Luxury Contemporary Interior Design with Elegant Furniture", "Urban City Skyscraper Facade with Glass Reflections"],
+          titles: [
+            "Modern Minimalist Architectural Facade with Geometric Lines",
+            "Luxury Contemporary Living Room with Elegant Interior Decor",
+            "Sleek Glass City Skyscraper Reflecting Clear Blue Sky",
+            "Spacious Scandinavian Style Interior with Natural Wood Accents"
+          ],
+          primaryTags: ["architecture", "interior design", "modern building", "minimalist", "urban facade", "contemporary house", "living room", "luxury home", "geometric lines", "real estate", "decor", "architectural", "structure", "cityscape", "spacious"]
+        },
+        {
+          key: "abstract_background",
+          patterns: [/abstract|background|texture|pattern|wall|art|backdrop|surface|gradient/i],
+          category: "Graphic Resources",
+          subjects: ["Elegant Abstract Geometric Texture with Smooth Gradients", "Vibrant Fluid Color Waves in Artistic Composition", "Minimalist Textured Surface Backdrop for Design Template"],
+          titles: [
+            "Elegant Abstract Geometric Texture with Fluid Color Gradients",
+            "Minimalist Artistic Backdrop with Subtle Dimensional Texture",
+            "Vibrant Contemporary Fluid Waves for Graphic Banner Layout",
+            "Clean Abstract Surface Pattern with High Resolution Detail"
+          ],
+          primaryTags: ["abstract", "texture", "background pattern", "graphic design", "gradient", "backdrop", "artistic", "minimalist", "fluid waves", "wallpaper", "contemporary art", "composition", "decorative", "color blend", "template"]
+        }
       ];
-      const selectedTheme = themes[seedIndex % themes.length];
 
-      let subjectPhrase = !isGenericName 
-        ? rawWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") 
-        : selectedTheme.subject;
+      // Detect niche from filename keywords
+      let matchedNiche = null;
+      if (!isGenericName) {
+        for (const n of nicheCatalog) {
+          if (n.patterns.some(p => p.test(cleanName))) {
+            matchedNiche = n;
+            break;
+          }
+        }
+      }
 
-      let title = subjectPhrase;
-      if (title.length < 35) {
-        title = `${subjectPhrase} in Professional Commercial Setting`;
+      // If no filename match, use visual features (color tone, brightness)
+      if (!matchedNiche && visualMeta) {
+        const { avgR, avgG, avgB, brightness } = visualMeta;
+        if (avgG > avgR * 1.15 && avgG > avgB * 1.05) {
+          matchedNiche = nicheCatalog.find(n => n.key === "nature_green");
+        } else if (avgB > avgR * 1.15 && avgB > avgG) {
+          matchedNiche = nicheCatalog.find(n => n.key === "landscape_travel");
+        } else if (avgR > avgG * 1.25 && avgG > avgB) {
+          matchedNiche = nicheCatalog.find(n => n.key === "coffee_culinary") || nicheCatalog.find(n => n.key === "food_gourmet");
+        } else if (brightness < 65) {
+          matchedNiche = nicheCatalog.find(n => n.key === "technology_digital") || nicheCatalog.find(n => n.key === "abstract_background");
+        } else if (brightness > 195) {
+          matchedNiche = nicheCatalog.find(n => n.key === "people_lifestyle") || nicheCatalog.find(n => n.key === "architecture_interior");
+        }
       }
-      if (title.length < 55) {
-        title = `${title} for Commercial Advertising and Publishing`;
+
+      // Fallback rotation using seedIndex if still undetected
+      if (!matchedNiche) {
+        matchedNiche = nicheCatalog[seedIndex % nicheCatalog.length];
       }
-      
-      // If excessively long, trim at word boundary safely without breaking grammar or adding dots
-      if (title.length > 95) {
-        let trimmed = title.slice(0, 95);
-        const lastSpace = trimmed.lastIndexOf(' ');
-        if (lastSpace > 50) trimmed = trimmed.slice(0, lastSpace);
-        title = trimmed;
+
+      // Pick unique title variation based on seedIndex
+      const titleIndex = (seedIndex + 1) % matchedNiche.titles.length;
+      let title = matchedNiche.titles[titleIndex];
+
+      // If specific filename words exist, integrate them into the title
+      if (!isGenericName && rawWords.length > 0) {
+        const customSubject = rawWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+        if (customSubject.length >= 8 && customSubject.length <= 40) {
+          title = `${customSubject} in Professional Commercial Setting`;
+          if (title.length < 55) title = `${title} for Editorial and Advertising`;
+        }
       }
       title = cleanStockTitle(title);
 
-      const description = cleanStockDescription(`Commercial stock visual asset featuring ${subjectPhrase.toLowerCase()}, suitable for editorial publishing, marketing campaigns, and digital media.`);
+      const description = cleanStockDescription(`High quality commercial stock photograph of ${title.toLowerCase()}, suitable for marketing campaigns, editorial publishing, and digital presentations.`);
 
-      const top10Candidates = [
-        ...(!isGenericName ? rawWords.map(w => w.toLowerCase()) : [selectedTheme.tag1, selectedTheme.tag2]),
-        selectedTheme.tag3,
-        selectedTheme.tag4,
-        selectedTheme.tag5,
-        "commercial", "professional", "closeup", "horizontal", "bright"
+      // Build unique keywords pool
+      const topTags = [...matchedNiche.primaryTags];
+      
+      // Inject dynamic orientation & visual attributes
+      const visualTags = [];
+      if (visualMeta) {
+        if (visualMeta.isWide) visualTags.push("horizontal", "wide angle", "panoramic view");
+        if (visualMeta.isTall) visualTags.push("vertical", "portrait orientation", "upright");
+        if (visualMeta.brightness > 180) visualTags.push("bright light", "high key", "sunlit", "illuminated");
+        if (visualMeta.brightness < 80) visualTags.push("dramatic lighting", "moody", "low key", "cinematic");
+        if (visualMeta.avgG > 140) visualTags.push("lush green", "natural color", "eco friendly");
+        if (visualMeta.avgB > 140) visualTags.push("blue tone", "azure", "clear atmosphere");
+        if (visualMeta.avgR > 140) visualTags.push("warm tone", "golden warm", "vibrant palette");
+      }
+
+      const styleTagsPool = [
+        "commercial photography", "professional shot", "sharp focus", "depth of field",
+        "detailed closeup", "studio lighting", "natural daylight", "high resolution",
+        "authentic", "contemporary style", "copyspace", "graphic asset", "editorial value",
+        "advertising layout", "creative concept", "modern perspective", "clean composition"
       ];
-      const top10 = Array.from(new Set(top10Candidates)).slice(0, 10);
 
-      const secondaryPool = [
-        "design", "light", "studio", "indoor", "composition",
-        "clean", "modern", "focus", "quality", "style", "digital", "color",
-        "graphic", "element", "collection", "presentation", "texture", "detail",
-        "fresh", "view", "visual", "artistic", "creative", "template", "space",
-        "perspective", "shadow", "clear", "sharp", "commercial photo", "marketing",
-        "banner", "concept", "backdrop", "advertising", "object", "nobody", "copy space",
-        "contemporary", "elegance", "vibrant", "authentic", "perfection"
-      ];
+      // Shuffle secondary tags uniquely per seed
+      const shuffledSecondary = styleTagsPool
+        .map((val, idx) => ({ val, sort: ((seedIndex * 17) + idx * 7) % 100 }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(obj => obj.val);
 
-      const allTags = cleanStockKeywords(Array.from(new Set([...top10, ...secondaryPool])), 48);
-      return { title, description, keywords: allTags, category: selectedTheme.category };
+      const combinedTags = [...topTags, ...visualTags, ...shuffledSecondary];
+      const finalKeywords = cleanStockKeywords(combinedTags, 48);
+
+      return {
+        title,
+        description,
+        keywords: finalKeywords,
+        category: matchedNiche.category
+      };
     }
 
     function updateBatchUI() {
@@ -5214,17 +5413,23 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
     }
 
     async function reAnalyzeActiveItem() {
-      if (currentActiveIdx < 0) return;
+      if (currentActiveIdx < 0 || !batchItemList[currentActiveIdx]) return;
       const item = batchItemList[currentActiveIdx];
       showToast(`Re-analyzing ${item.fileName}...`);
 
       try {
-        const { base64Data, mimeType } = await prepareFastImageForAI(item.file);
+        const { base64Data, mimeType, visualMeta } = await prepareFastImageForAI(item.file);
+        if (visualMeta) item.visualMeta = visualMeta;
         let meta;
         if (userApiKey && userApiKey.trim()) {
-          meta = await fetchStockMetadataWithGemini(base64Data, mimeType, item.fileName);
+          try {
+            meta = await fetchStockMetadataWithGemini(base64Data, mimeType, item.fileName);
+          } catch (err) {
+            console.warn("Re-analyze Vision AI fallback:", err);
+            meta = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1, item.visualMeta);
+          }
         } else {
-          meta = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1);
+          meta = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1, item.visualMeta);
         }
         item.title = cleanStockTitle(meta.title || item.title);
         item.description = cleanStockDescription(meta.description || item.description);
@@ -5233,7 +5438,7 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
         loadActiveItem(currentActiveIdx);
         showToast('Updated with fresh metadata!');
       } catch (e) {
-        const fallback = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1);
+        const fallback = generateSmartFallbackMetadata(item.fileName, currentActiveIdx + 1, item.visualMeta);
         item.title = cleanStockTitle(fallback.title);
         item.description = cleanStockDescription(fallback.description);
         item.keywords = cleanStockKeywords(fallback.keywords, 49);
