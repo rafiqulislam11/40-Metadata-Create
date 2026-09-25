@@ -2071,43 +2071,43 @@
 
     const PLATFORM_CRITERIA = {
       'Adobe Stock': { 
-        titleTarget: '55 to 75 chars',
-        rules: 'Crucial: First 10 keywords MUST be the most specific, highest-volume commercial terms representing the exact subject and setting (Adobe Stock gives 80% search ranking to the first 10 tags). Provide exactly 46 to 48 unique keywords. Title must be 55-75 chars, front-loaded with subject, no spam buzzwords (do NOT use "background", "stunning", "isolated on white", "4k").',
-        notice: 'Adobe Stock: 55-75 chars • Top 10 Keywords Carry 80% Search Weight'
+        titleTarget: '60 to 80 chars',
+        rules: 'Crucial: First 10 keywords MUST be the most specific, highest-volume commercial terms representing the exact subject and setting (Adobe Stock gives 80% search ranking to the first 10 tags). Provide exactly 46 to 48 unique keywords. Title must be a 100% COMPLETE, natural, grammatically correct full sentence (60-80 chars) front-loaded with primary subject, setting, and action. Never use ellipsis (...), double dots (..), or cut off words.',
+        notice: 'Adobe Stock: 60-80 chars • Complete Accurate Sentence • Top 10 Keywords Carry 80% Search Weight'
       },
       'Shutterstock': { 
         titleTarget: '60 to 90 chars',
-        rules: 'Full descriptive sentence with lighting style, shot type, camera angle, followed by 48 comprehensive keywords.',
-        notice: 'Shutterstock: 60-90 chars • Full Sentence Caption & Categories'
+        rules: 'Full descriptive complete sentence with lighting style, shot type, camera angle, followed by 48 comprehensive keywords. Complete grammatical sentence without ellipsis or trailing dots.',
+        notice: 'Shutterstock: 60-90 chars • Complete Full Sentence Caption & Categories'
       },
       'Freepik': { 
-        titleTarget: '50 to 70 chars',
-        rules: 'Graphic designer utility, background color, minimal attributes, 35 clean tags.',
-        notice: 'Freepik: 50-70 chars • Clean Graphic & Design Utility Tags'
+        titleTarget: '50 to 75 chars',
+        rules: 'Graphic designer utility, background color, minimal attributes, 35 clean tags. Complete sentence without ellipsis or trailing dots.',
+        notice: 'Freepik: 50-75 chars • Clean Graphic & Design Utility Tags'
       },
       'Vecteezy': { 
         titleTarget: '50 to 75 chars',
-        rules: 'Vector / design template utility, banner concept, copy space, 35 to 40 tags.',
+        rules: 'Vector / design template utility, banner concept, copy space, 35 to 40 tags. Complete sentence without ellipsis or trailing dots.',
         notice: 'Vecteezy: 50-75 chars • Vector & Template Concepts'
       },
       'Depositphotos': { 
         titleTarget: '60 to 80 chars',
-        rules: 'Commercial caption with emotional and synonymous search phrases, 45 tags.',
+        rules: 'Commercial caption with emotional and synonymous search phrases, 45 tags. Complete sentence without ellipsis or trailing dots.',
         notice: 'Depositphotos: 60-80 chars • High Keyword Density'
       },
       '123RF': { 
         titleTarget: '55 to 75 chars',
-        rules: 'Primary subject hierarchy down to broad conceptual categorizations, 45 tags.',
+        rules: 'Primary subject hierarchy down to broad conceptual categorizations, 45 tags. Complete sentence without ellipsis or trailing dots.',
         notice: '123RF: 55-75 chars • Structured Subject Hierarchy'
       },
       'Dreamstime': { 
         titleTarget: '55 to 75 chars',
-        rules: 'Detailed subject caption with high commercial keyword density, 45 tags.',
+        rules: 'Detailed subject caption with high commercial keyword density, 45 tags. Complete sentence without ellipsis or trailing dots.',
         notice: 'Dreamstime: 55-75 chars • 45 Commercial Tags'
       },
       'Alamy': { 
         titleTarget: '60 to 100 chars',
-        rules: 'Detailed documentary caption answering who, what, where, when. Comprehensive tags.',
+        rules: 'Detailed documentary caption answering who, what, where, when. Comprehensive tags. Complete sentence without ellipsis or trailing dots.',
         notice: 'Alamy: 60-100 chars • Detailed Editorial & Commercial'
       }
     };
@@ -4077,6 +4077,7 @@ Use clean markdown with bullet points and bold highlights.`;
     }
 
     // ==========================================
+    // ==========================================
     // Microstock Compliance & CSV Sanitizers
     // ==========================================
     function cleanStockTitle(rawTitle) {
@@ -4097,27 +4098,37 @@ Use clean markdown with bullet points and bold highlights.`;
       // 3. Normalize curly quotes and special dashes
       t = t.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
            .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, "'")
-           .replace(/[\u2013\u2014]/g, '-')
-           .replace(/\u2026/g, '...');
+           .replace(/[\u2013\u2014]/g, '-');
 
-      // 4. Double quotes strictly converted to single quotes for stock agency compliance
+      // 4. Eliminate horizontal ellipsis (\u2026) and any consecutive dots (.. or ...)
+      // Replace with a clean space so words aren't glued together, NEVER with '...'
+      t = t.replace(/\u2026/g, ' ')
+           .replace(/\.{2,}/g, ' ');
+
+      // 5. Double quotes strictly converted to single quotes for stock agency compliance
       t = t.replace(/"/g, "'");
 
-      // 5. Replace newlines, line breaks (\r, \n) and tabs with a single space
+      // 6. Replace newlines, line breaks (\r, \n) and tabs with a single space
       // Critical: internal newlines corrupt CSV rows in Excel and stock contributor portals
       t = t.replace(/[\r\n\t]+/g, ' ');
 
-      // 6. Remove invisible control characters
+      // 7. Remove invisible control characters
       t = t.replace(/[\x00-\x1F\x7F]/g, '');
 
-      // 7. Strip surrounding quotes and whitespace
+      // 8. Strip surrounding quotes and whitespace
       t = t.replace(/^['"\s]+|['"\s]+$/g, '');
 
-      // 8. Remove trailing punctuation (periods, commas, colons)
-      t = t.replace(/[.,;:\s]+$/, '').trim();
+      // 9. Remove dangling prepositions or conjunctions if a sentence was chopped off mid-way
+      for (let pass = 0; pass < 2; pass++) {
+        t = t.replace(/[.,;:!\-_—\s]+$/, '').trim();
+        t = t.replace(/\s+(and|or|with|in|at|of|for|to|by|the|a|an|on|from|as|during|into|onto)\s*$/i, '');
+      }
 
-      // 9. Collapse multiple spaces
-      t = t.replace(/\s+/g, ' ');
+      // 10. Remove all trailing punctuation (dots, periods, commas, colons) so CSV title ends cleanly as an accurate complete sentence
+      t = t.replace(/[.,;:!\-_—\s]+$/, '').trim();
+
+      // 11. Collapse multiple spaces
+      t = t.replace(/\s+/g, ' ').trim();
 
       return t;
     }
@@ -4134,11 +4145,14 @@ Use clean markdown with bullet points and bold highlights.`;
            .replace(/&nbsp;/g, ' ');
       d = d.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
            .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, "'")
-           .replace(/[\u2013\u2014]/g, '-')
-           .replace(/\u2026/g, '...');
+           .replace(/[\u2013\u2014]/g, '-');
+      // Eliminate ellipsis and consecutive dots, never output '...'
+      d = d.replace(/\u2026/g, ' ')
+           .replace(/\.{2,}/g, '. ');
       d = d.replace(/"/g, "'");
       d = d.replace(/[\r\n\t]+/g, ' ');
       d = d.replace(/[\x00-\x1F\x7F]/g, '');
+      d = d.replace(/\s+\./g, '.');
       d = d.replace(/^['"\s]+|['"\s]+$/g, '').trim();
       d = d.replace(/\s+/g, ' ');
       return d;
@@ -4157,6 +4171,8 @@ Use clean markdown with bullet points and bold highlights.`;
                      .replace(/[\r\n\t]+/g, ' ')
                      .replace(/[\x00-\x1F\x7F]/g, '')
                      .replace(/['"]/g, '')
+                     .replace(/\u2026/g, '')
+                     .replace(/\.{2,}/g, '')
                      .replace(/[^\w\s-]/g, '')
                      .trim();
           tag = tag.replace(/\s+/g, ' ');
@@ -4171,9 +4187,14 @@ Use clean markdown with bullet points and bold highlights.`;
 
     function formatCsvCell(val, options = {}) {
       if (val === null || val === undefined) return '""';
-      let s = options.isTitle ? cleanStockTitle(val) : String(val);
-      if (!options.isTitle) {
-        s = s.replace(/&amp;/g, '&')
+      let s = '';
+      if (options.isTitle) {
+        s = cleanStockTitle(val);
+      } else if (options.isDesc) {
+        s = cleanStockDescription(val);
+      } else {
+        s = String(val)
+             .replace(/&amp;/g, '&')
              .replace(/&quot;/g, '"')
              .replace(/&#39;/g, "'")
              .replace(/&lt;/g, '<')
@@ -4181,6 +4202,8 @@ Use clean markdown with bullet points and bold highlights.`;
              .replace(/[\u2018\u2019]/g, "'")
              .replace(/[\u201C\u201D]/g, "'")
              .replace(/[\u2013\u2014]/g, '-')
+             .replace(/\u2026/g, ' ')
+             .replace(/\.{2,}/g, ' ')
              .replace(/[\r\n\t]+/g, ' ')
              .replace(/[\x00-\x1F\x7F]/g, '')
              .replace(/^['"\s]+|['"\s]+$/g, '')
@@ -4204,7 +4227,7 @@ Use clean markdown with bullet points and bold highlights.`;
     async function fetchStockMetadataWithGemini(base64Image, mimeType, fileName) {
       const criteria = PLATFORM_CRITERIA[activePlatform] || PLATFORM_CRITERIA['Adobe Stock'];
 
-      const promptInstructions = `You are an elite microstock contributor and Adobe Stock SEO search ranking specialist.
+      const promptInstructions = `You are an elite microstock contributor and ${activePlatform || 'Adobe Stock'} SEO search ranking specialist.
 Thoroughly inspect every visual detail of this image (Filename: "${fileName}").
 Look closely at:
 1. Exact primary subject, person (age, ethnicity, attire, role), object, animal, food, or landscape.
@@ -4215,8 +4238,14 @@ Look closely at:
 Marketplace Rules:
 ${criteria.rules}
 
-Key requirements for Adobe Stock:
-1. Title: Front-loaded with the most specific subject (e.g., "Senior physician examining digital tablet with patient in modern hospital"). Exactly 55-75 chars. No spam words ("isolated", "stunning", "beautiful", "4k").
+Key requirements for ${activePlatform || 'Adobe Stock'}:
+1. Title: Front-loaded with the most specific subject (e.g., "Senior physician examining digital tablet with patient in modern hospital").
+   CRITICAL TITLE RULES:
+   - Must be a 100% COMPLETE, natural, grammatically correct full sentence.
+   - Absolutely NEVER use ellipsis ("..."), double dots (".."), or trailing dots.
+   - NEVER truncate or cut off words at the end.
+   - Target length: 60 to 85 characters of natural, complete English text.
+   - No spam buzzwords (do NOT use "isolated", "stunning", "beautiful", "4k", "copyspace").
 2. First 10 Keywords: Adobe Stock assigns 80% search ranking weight to tags 1 to 10. They MUST represent:
    - Tags 1-3: Exact primary subject & noun.
    - Tags 4-6: Main action, activity, or core visual feature.
@@ -4305,7 +4334,7 @@ Key requirements for Adobe Stock:
     }
 
     function generateSmartFallbackMetadata(filename, seedIndex = 0) {
-      const cleanName = filename.replace(/\.[^/.]+$/, "").replace(/[-_0-9]+/g, " ").trim();
+      const cleanName = filename.replace(/\.[^/.]+$/, "").replace(/[._\-0-9]+/g, " ").trim();
       const rawWords = cleanName.split(/\s+/).filter(w => w.length > 2);
       const isGenericName = rawWords.length === 0 || rawWords.every(w => /^(img|dsc|pic|photo|image|dcim|screenshot|untitled|asset|raw|capture|file|sam)$/i.test(w));
       
@@ -4325,21 +4354,20 @@ Key requirements for Adobe Stock:
         ? rawWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") 
         : selectedTheme.subject;
 
-      if (subjectPhrase.length < 25) {
-        subjectPhrase = `${subjectPhrase} in Professional Commercial Setting`;
-      }
-
       let title = subjectPhrase;
+      if (title.length < 35) {
+        title = `${subjectPhrase} in Professional Commercial Setting`;
+      }
       if (title.length < 55) {
-        title = `${subjectPhrase} for Commercial Advertising and Publishing`;
+        title = `${title} for Commercial Advertising and Publishing`;
       }
       
-      title = cleanStockTitle(title);
-      if (title.length > 75) {
-        let trimmed = title.slice(0, 75);
+      // If excessively long, trim at word boundary safely without breaking grammar or adding dots
+      if (title.length > 95) {
+        let trimmed = title.slice(0, 95);
         const lastSpace = trimmed.lastIndexOf(' ');
-        if (lastSpace > 45) trimmed = trimmed.slice(0, lastSpace);
-        title = trimmed.trim();
+        if (lastSpace > 50) trimmed = trimmed.slice(0, lastSpace);
+        title = trimmed;
       }
       title = cleanStockTitle(title);
 
@@ -4513,15 +4541,18 @@ Key requirements for Adobe Stock:
       const input = document.getElementById('metaTitleBox');
       const counter = document.getElementById('titleCounter');
 
-      // Auto-strip newlines and tabs if pasted to preserve CSV row integrity
+      // Auto-strip newlines, tabs, and dot-dots to preserve CSV row integrity & sentence quality
       if (/[\r\n\t]/.test(input.value)) {
         input.value = input.value.replace(/[\r\n\t]+/g, ' ');
       }
+      if (/\.{2,}|\u2026/.test(input.value)) {
+        input.value = input.value.replace(/\u2026/g, ' ').replace(/\.{2,}/g, ' ');
+      }
 
       const len = input.value.length;
-      counter.innerText = `${len} / 75 chars (Optimal: 55-75)`;
+      counter.innerText = `${len} / 80 chars (Optimal: 55-80)`;
       
-      if (len < 55 || len > 75) {
+      if (len < 45 || len > 95) {
         counter.classList.add('text-amber-600');
         counter.classList.remove('text-slate-400');
       } else {
@@ -4967,7 +4998,7 @@ Key requirements for Adobe Stock:
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
-        const desc = formatCsvCell(it.description || it.title);
+        const desc = formatCsvCell(it.description || it.title, { isDesc: true });
         const kw = formatCsvKeywords(it.keywords, 50);
         csv += `${fn},${title},${desc},${kw}\r\n`;
       });
@@ -4986,7 +5017,7 @@ Key requirements for Adobe Stock:
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
-        const desc = formatCsvCell(it.description || it.title);
+        const desc = formatCsvCell(it.description || it.title, { isDesc: true });
         const kw = formatCsvKeywords(it.keywords, 49);
         const cat = formatCsvCell(it.category || 'Lifestyle');
         const med = formatCsvCell(it.medium || 'Photo');
