@@ -3080,11 +3080,14 @@
 
       batchItemList.forEach(item => {
         if (prefix && !item.title.startsWith(prefix)) {
-          item.title = prefix + item.title;
+          const space = (prefix.endsWith(' ') || prefix.endsWith('-')) ? '' : ' ';
+          item.title = prefix + space + item.title;
         }
         if (suffix && !item.title.endsWith(suffix)) {
-          item.title = item.title + suffix;
+          const space = (suffix.startsWith(' ') || suffix.startsWith(',')) ? '' : ' ';
+          item.title = item.title + space + suffix;
         }
+        item.title = cleanStockTitle(item.title);
       });
 
       if (currentActiveIdx >= 0) loadActiveItem(currentActiveIdx);
@@ -3271,6 +3274,7 @@
         if (item.title.length < 55) {
           item.title = item.title + " for Commercial Stock Photography Concept";
         }
+        item.title = cleanStockTitle(item.title);
         loadActiveItem(currentActiveIdx);
         updateBatchUI();
       }
@@ -3918,6 +3922,13 @@ Use clean markdown with bullet points and bold highlights.`;
           };
           img.src = e.target.result;
         };
+        reader.onerror = () => {
+          resolve({
+            displayUrl: '',
+            base64Data: '',
+            mimeType: (file && file.type) || 'image/jpeg'
+          });
+        };
         reader.readAsDataURL(file);
       });
     }
@@ -4221,7 +4232,19 @@ Use clean markdown with bullet points and bold highlights.`;
     function downloadCsvFile(csvContent, filename) {
       // UTF-8 BOM (\uFEFF) forces Microsoft Excel & spreadsheet viewers on Windows/Mac to parse as UTF-8 Unicode
       const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, filename);
+      if (typeof saveAs === 'function') {
+        saveAs(blob, filename);
+      } else {
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
     }
 
     async function fetchStockMetadataWithGemini(base64Image, mimeType, fileName) {
@@ -4693,14 +4716,16 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
       const rawVal = input.value.trim();
       if (!rawVal || currentActiveIdx < 0) return;
 
-      const splitTags = rawVal.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 1);
+      const splitTags = rawVal.split(/[,;\n\t]+/)
+        .map(t => t.trim().toLowerCase().replace(/[\u2026.]/g, '').replace(/['"]/g, ''))
+        .filter(t => t.length > 1);
       if (splitTags.length === 0) return;
 
       const list = batchItemList[currentActiveIdx].keywords;
       let addedCount = 0;
 
       splitTags.forEach(val => {
-        if (!list.includes(val)) {
+        if (!list.includes(val) && list.length < 49) {
           if (addToTop) {
             list.unshift(val);
           } else {
@@ -4716,7 +4741,7 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
       if (addedCount > 0) {
         showToast(addToTop ? `Added to Top 10 rankings` : `Added ${addedCount} keyword(s)`);
       } else {
-        showToast('Keywords already present');
+        showToast('Keywords already present or limit reached');
       }
     }
 
@@ -4758,16 +4783,19 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
       const asTop = document.getElementById('bulkTop10Check').checked;
       if (!val) return;
 
-      const tags = val.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 1);
+      const tags = val.split(/[,;\n\t]+/)
+        .map(t => t.trim().toLowerCase().replace(/[\u2026.]/g, '').replace(/['"]/g, ''))
+        .filter(t => t.length > 1);
       if (tags.length === 0) return;
 
       batchItemList.forEach(item => {
         tags.forEach(t => {
-          if (!item.keywords.includes(t)) {
+          if (!item.keywords.includes(t) && item.keywords.length < 49) {
             if (asTop) item.keywords.unshift(t);
             else item.keywords.push(t);
           }
         });
+        if (item.keywords.length > 49) item.keywords = item.keywords.slice(0, 49);
       });
 
       if (currentActiveIdx >= 0) {
