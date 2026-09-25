@@ -1865,11 +1865,11 @@
           <div>
             <div class="flex items-center justify-between">
               <span class="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Shutterstock
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Shutterstock Official
               </span>
-              <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">4 Columns</span>
+              <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">7 Columns</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1 font-mono">Filename, Description, Keywords, Categories</p>
+            <p class="text-[11px] text-slate-500 mt-1 font-mono">Filename, Description, Keywords, Categories, Editorial, Mature content, illustration</p>
           </div>
           <button onclick="downloadShutterstockCsv(); closeExportModal();" class="w-full py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Shutterstock CSV
@@ -5400,14 +5400,18 @@ CRITICAL RULES:
       const cat = formatCsvCell(getShutterstockCategory(it.category));
 
       let row = '';
+      const editorial = (it.isEditorial || (it.releases && it.releases.toLowerCase().includes('editorial'))) ? 'yes' : 'no';
+      const mature = it.isMature ? 'yes' : 'no';
+      const isIllustration = (it.medium === 'Vector / Illustration' || it.medium === 'AI Generated' || it.medium === '3D Render') ? 'yes' : 'no';
+
       if (activePlatform === 'Shutterstock') {
-        row = `${fn},${desc},${kw},${cat}\r\n`;
+        row = `${fn},${desc},${kw},${cat},${editorial},${mature},${isIllustration}\r\n`;
         clipboardSafeCopy(row);
-        showToast('Shutterstock Row Copied ("Filename","Description","Keywords","Categories")!');
+        showToast('Shutterstock 7-Column Row Copied!');
       } else {
         row = `${fn},${title},${kw}\r\n`;
         clipboardSafeCopy(row);
-        showToast('Row Copied ("Filename","Title","Keywords")!');
+        showToast('Row Copied (Filename, Title, Keywords)!');
       }
     }
 
@@ -5419,7 +5423,7 @@ CRITICAL RULES:
 
       let csv = '';
       if (activePlatform === 'Shutterstock') {
-        csv = '"Filename","Description","Keywords","Categories"\r\n';
+        csv = "Filename,Description,Keywords,Categories,Editorial,Mature content,illustration\r\n";
         batchItemList.forEach(it => {
           const fn = formatCsvCell(it.fileName);
           let descText = it.description || it.title;
@@ -5429,10 +5433,13 @@ CRITICAL RULES:
           const desc = formatCsvCell(descText, { isDesc: true });
           const kw = formatCsvKeywords(it.keywords, 49);
           const cat = formatCsvCell(getShutterstockCategory(it.category));
-          csv += `${fn},${desc},${kw},${cat}\r\n`;
+          const editorial = (it.isEditorial || (it.releases && it.releases.toLowerCase().includes('editorial'))) ? 'yes' : 'no';
+          const mature = it.isMature ? 'yes' : 'no';
+          const isIllustration = (it.medium === 'Vector / Illustration' || it.medium === 'AI Generated' || it.medium === '3D Render') ? 'yes' : 'no';
+          csv += `${fn},${desc},${kw},${cat},${editorial},${mature},${isIllustration}\r\n`;
         });
         clipboardSafeCopy(csv);
-        showToast(`Copied all ${batchItemList.length} Shutterstock rows to clipboard!`);
+        showToast(`Copied all ${batchItemList.length} Shutterstock 7-column rows to clipboard!`);
       } else {
         csv = '"Filename","Title","Keywords"\r\n';
         batchItemList.forEach(it => {
@@ -5607,9 +5614,9 @@ CRITICAL RULES:
         return;
       }
 
-      // Shutterstock official format: "Filename","Description","Keywords","Categories"
-      // Header and data cells strictly verified against Shutterstock CSV uploader
-      let csv = '"Filename","Description","Keywords","Categories"\r\n';
+      // Official 7-Column Shutterstock Contributor CSV specification:
+      // Filename,Description,Keywords,Categories,Editorial,Mature content,illustration
+      let csv = "Filename,Description,Keywords,Categories,Editorial,Mature content,illustration\r\n";
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         let descText = it.description;
@@ -5619,11 +5626,15 @@ CRITICAL RULES:
         const desc = formatCsvCell(descText, { isDesc: true });
         const kw = formatCsvKeywords(it.keywords, 49);
         const cat = formatCsvCell(getShutterstockCategory(it.category));
-        csv += `${fn},${desc},${kw},${cat}\r\n`;
+        const editorial = (it.isEditorial || (it.releases && it.releases.toLowerCase().includes('editorial'))) ? 'yes' : 'no';
+        const mature = it.isMature ? 'yes' : 'no';
+        const isIllustration = (it.medium === 'Vector / Illustration' || it.medium === 'AI Generated' || it.medium === '3D Render') ? 'yes' : 'no';
+
+        csv += `${fn},${desc},${kw},${cat},${editorial},${mature},${isIllustration}\r\n`;
       });
 
       downloadCsvFile(csv, `shutterstock_metadata_${Date.now()}.csv`);
-      showToast('Shutterstock Official CSV Downloaded (100% Accepted)!');
+      showToast('Shutterstock Official 7-Column CSV Downloaded (100% Accepted)!');
     }
 
     function downloadFreepikCsv() {
