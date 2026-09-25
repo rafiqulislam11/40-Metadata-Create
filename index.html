@@ -159,6 +159,13 @@
           Upgrade
         </button>
 
+        <!-- AI Engine / API Test Status Button -->
+        <button onclick="openApiModal()" id="headerApiStatusBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer" title="Gemini Vision Engine & API Key Settings">
+          <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i>
+          <span id="headerApiStatusText" class="hidden sm:inline">AI Engine</span>
+          <span id="headerApiStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </button>
+
         <!-- 3x3 Apps Grid Menu Button -->
         <div class="relative">
           <button onclick="toggleAppsMenu()" id="appsMenuBtn" title="All PixcraftAI Tools" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition">
@@ -275,10 +282,10 @@
     <div class="p-4 border-t border-slate-100 bg-slate-50 text-xs">
       <div class="flex items-center justify-between mb-2">
         <span class="text-slate-500 font-semibold">Vision AI Status</span>
-        <span class="font-bold text-emerald-600">Connected</span>
+        <span class="font-bold text-emerald-600" id="sidebarApiStatus">Connected</span>
       </div>
-      <button onclick="openApiModal(); toggleSidebar();" class="w-full py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-700 font-bold transition flex items-center justify-center gap-1.5">
-        <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i> Configure API Key
+      <button onclick="openApiModal(); toggleSidebar();" class="w-full py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-700 font-bold transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer">
+        <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i> Configure & Test API
       </button>
     </div>
   </aside>
@@ -579,6 +586,11 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <button onclick="openApiModal()" id="metaSuiteApiBtn" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 transition shadow-2xs cursor-pointer" title="Gemini AI Key & Test Settings">
+          <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i>
+          <span id="metaSuiteApiLabel">API Test & Settings</span>
+          <span id="metaSuiteApiDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </button>
         <button onclick="openBulkToolsModal()" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 transition">
           <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-600"></i> Bulk Tools
         </button>
@@ -1939,56 +1951,82 @@
           <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
             <i data-lucide="key" class="w-4 h-4"></i>
           </div>
-          <h3 class="font-extrabold text-slate-900 text-base">Gemini Vision AI Engine</h3>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base leading-tight">Gemini Vision AI Engine</h3>
+            <p class="text-[11px] text-slate-500">Multimodal visual inspection & API test</p>
+          </div>
         </div>
-        <button onclick="closeApiModal()" class="text-slate-400 hover:text-slate-700">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <div id="modalApiStatusBadge"></div>
+          <button onclick="closeApiModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition" title="Close dialog">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
       </div>
 
       <p class="text-xs text-slate-600 leading-relaxed">
         PixcraftAI works out-of-the-box in <strong>Fast Built-in Mode</strong>. For direct visual inspection of fine details, add your free Google Gemini API key:
       </p>
 
-      <div class="space-y-3 text-xs">
+      <div class="space-y-3.5 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Gemini API Key</label>
-          <input 
-            type="password" 
-            id="customKeyInput" 
-            placeholder="Leave empty for auto built-in heuristic mode" 
-            class="w-full font-mono px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
-          >
-          <span class="text-[11px] text-slate-400 block mt-1">Get your free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 underline">aistudio.google.com</a></span>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Gemini API Key</label>
+            <button type="button" onclick="clearCustomApiKey()" class="text-[11px] text-rose-500 hover:text-rose-700 font-semibold transition cursor-pointer" title="Clear key and switch to built-in mode">
+              Clear Key
+            </button>
+          </div>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="customKeyInput" 
+              placeholder="AIzaSy... (Leave empty for auto built-in mode)" 
+              class="w-full font-mono px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 transition text-xs"
+            >
+            <button type="button" onclick="toggleKeyVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer" title="Toggle key visibility">
+              <i data-lucide="eye" id="keyVisibilityIcon" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="flex items-center justify-between mt-1 text-[11px]">
+            <span class="text-slate-400">Get free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 underline font-semibold">aistudio.google.com</a></span>
+            <span class="text-emerald-600 font-medium">1,500 req/day free tier</span>
+          </div>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">Select Vision Model</label>
-          <select id="modelSelectBox" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 outline-none">
-            <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Latest 2026 - Fast & SOTA)</option>
-            <option value="gpt-5-vision">ChatGPT GPT-5 Vision Engine</option>
-            <option value="claude-3-7-sonnet">Claude 3.7 Sonnet Multimodal</option>
-            <option value="deepseek-r1-vision">DeepSeek R1 Visual Reasoning</option>
-            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Select Vision Model</label>
+            <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">High Quota</span>
+          </div>
+          <select id="modelSelectBox" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-slate-800 outline-none text-xs font-medium focus:ring-2 focus:ring-blue-500 transition">
+            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Recommended - 1,500 req/day Free)</option>
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast Multimodal - 1,500 req/day Free)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Production Standard - 1,500 req/day Free)</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Visual Reasoning)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Context Multi-Image)</option>
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash (Experimental Preview - Low 20 req limit)</option>
           </select>
+          <p class="text-[10px] text-slate-500 mt-1">
+            💡 <strong>Flash models</strong> provide up to 1,500 free requests per day (15 RPM) for high-volume metadata tagging.
+          </p>
         </div>
 
         <div>
-          <button type="button" onclick="testApiKeyConnection()" id="testApiBtn" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center gap-1.5 transition border border-slate-200">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
-            <span>Test Connection</span>
+          <button type="button" onclick="testApiKeyConnection()" id="testApiBtn" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center justify-center gap-2 transition border border-slate-200 cursor-pointer shadow-2xs">
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-600"></i>
+            <span>Test Connection & Verify Quota</span>
           </button>
-          <div id="testApiStatusMsg" class="text-xs font-semibold mt-1.5 text-center hidden"></div>
+          <div id="testApiStatusMsg" class="text-xs font-semibold mt-2 text-center hidden"></div>
         </div>
       </div>
 
-      <div class="flex gap-2 pt-2 border-t border-slate-100">
-        <button onclick="closeApiModal()" class="w-1/2 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+      <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
+        <button onclick="closeApiModal()" class="w-1/3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer">
           Cancel
         </button>
-        <button onclick="saveApiSetting()" class="w-1/2 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
-          Save Settings
+        <button onclick="saveApiSetting()" class="w-2/3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs hover:shadow-sm cursor-pointer flex items-center justify-center gap-1.5">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span>Save Settings</span>
         </button>
       </div>
     </div>
@@ -2054,8 +2092,10 @@
     let isProcessingBatch = false;
     let userApiKey = localStorage.getItem('pixcraft_custom_api_key') || "";
     let selectedModel = localStorage.getItem('pixcraft_selected_model');
-    if (!selectedModel || selectedModel === 'gemini-2.5-flash' || selectedModel === 'gemini-2.0-flash' || selectedModel === 'gemini-1.5-flash') {
-      selectedModel = "gemini-3.8-flash";
+    // Gemini 2.5 Flash is Google's recommended high-quota model with 1,500 free req/day.
+    // Migrate away from gemini-3.8-flash (which is capped at 20 free requests) and non-gemini models
+    if (!selectedModel || selectedModel === 'gemini-3.8-flash' || selectedModel === 'gemini-3.5-flash' || !selectedModel.startsWith('gemini')) {
+      selectedModel = "gemini-2.5-flash";
       localStorage.setItem('pixcraft_selected_model', selectedModel);
     }
     let activeModel = localStorage.getItem('pixcraft_hub_model');
@@ -2118,7 +2158,10 @@
       updateCreditsDisplay();
       initDragAndDrop();
       initKeyboardShortcuts();
-      document.getElementById('modelSelectBox').value = selectedModel;
+      if (document.getElementById('modelSelectBox')) {
+        document.getElementById('modelSelectBox').value = selectedModel;
+      }
+      refreshApiStatusUI();
     });
 
     // View Switching: 'hub' vs 'metadata'
@@ -3809,63 +3852,297 @@ Use clean markdown with bullet points and bold highlights.`;
       }, 2600);
     }
 
+    function refreshApiStatusUI() {
+      const hasKey = !!(userApiKey && userApiKey.trim());
+      const currentModel = selectedModel || 'gemini-2.5-flash';
+      const cleanModelName = currentModel.replace('gemini-', 'Gemini ').replace('-flash', ' Flash').replace('-pro', ' Pro');
+
+      // Top Header status button
+      const headerText = document.getElementById('headerApiStatusText');
+      const headerDot = document.getElementById('headerApiStatusDot');
+      if (headerText && headerDot) {
+        if (hasKey) {
+          headerText.innerText = `${cleanModelName}`;
+          headerDot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-xs animate-pulse';
+        } else {
+          headerText.innerText = 'AI Engine: Built-in';
+          headerDot.className = 'w-2 h-2 rounded-full bg-sky-500';
+        }
+      }
+
+      // Metadata Generator view button
+      const metaLabel = document.getElementById('metaSuiteApiLabel');
+      const metaDot = document.getElementById('metaSuiteApiDot');
+      if (metaLabel && metaDot) {
+        if (hasKey) {
+          metaLabel.innerText = `AI: ${cleanModelName}`;
+          metaDot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-xs';
+        } else {
+          metaLabel.innerText = 'AI: Fast Built-in';
+          metaDot.className = 'w-2 h-2 rounded-full bg-sky-500';
+        }
+      }
+
+      // Sidebar status
+      const sidebarStatus = document.getElementById('sidebarApiStatus');
+      if (sidebarStatus) {
+        if (hasKey) {
+          sidebarStatus.innerText = `Connected (${cleanModelName})`;
+          sidebarStatus.className = 'font-bold text-emerald-600 text-xs';
+        } else {
+          sidebarStatus.innerText = 'Fast Built-in Mode';
+          sidebarStatus.className = 'font-bold text-blue-600 text-xs';
+        }
+      }
+
+      // Chat header indicator
+      const chatApiIndicator = document.getElementById('chatApiModeIndicator');
+      if (chatApiIndicator) {
+        chatApiIndicator.innerText = hasKey ? `${cleanModelName}` : 'Fast Built-in';
+      }
+    }
+
     function openApiModal() {
-      document.getElementById('customKeyInput').value = userApiKey;
-      document.getElementById('modelSelectBox').value = selectedModel;
+      document.getElementById('customKeyInput').value = userApiKey || '';
+      document.getElementById('modelSelectBox').value = selectedModel || 'gemini-2.5-flash';
       document.getElementById('testApiStatusMsg').classList.add('hidden');
+
+      const modalStatusBadge = document.getElementById('modalApiStatusBadge');
+      if (modalStatusBadge) {
+        if (userApiKey && userApiKey.trim()) {
+          modalStatusBadge.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Key Active</span>`;
+        } else {
+          modalStatusBadge.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Fast Built-in</span>`;
+        }
+      }
+
       document.getElementById('apiKeyDialog').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
     }
 
     function closeApiModal() {
       document.getElementById('apiKeyDialog').classList.add('hidden');
     }
 
+    function toggleKeyVisibility() {
+      const input = document.getElementById('customKeyInput');
+      const icon = document.getElementById('keyVisibilityIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        if (icon) icon.setAttribute('data-lucide', 'eye');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function clearCustomApiKey() {
+      userApiKey = "";
+      localStorage.removeItem('pixcraft_custom_api_key');
+      document.getElementById('customKeyInput').value = "";
+      const statusDiv = document.getElementById('testApiStatusMsg');
+      statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 block text-center';
+      statusDiv.innerText = 'Key cleared! PixcraftAI is now using Fast Built-in Mode with zero API limits.';
+      statusDiv.classList.remove('hidden');
+      refreshApiStatusUI();
+      openApiModal();
+      showToast('Switched to Fast Built-in Mode');
+    }
+
     function saveApiSetting() {
       userApiKey = document.getElementById('customKeyInput').value.trim();
-      selectedModel = document.getElementById('modelSelectBox').value;
+      selectedModel = document.getElementById('modelSelectBox').value || 'gemini-2.5-flash';
       localStorage.setItem('pixcraft_custom_api_key', userApiKey);
       localStorage.setItem('pixcraft_selected_model', selectedModel);
+      refreshApiStatusUI();
       closeApiModal();
-      showToast(userApiKey ? 'Custom Gemini Key Saved' : 'Using Fast Built-in Mode');
+      showToast(userApiKey ? `Saved: ${selectedModel}` : 'Using Fast Built-in Mode');
     }
 
     async function testApiKeyConnection() {
-      const key = document.getElementById('customKeyInput').value.trim();
+      const keyInput = document.getElementById('customKeyInput');
+      const key = keyInput.value.trim();
       const statusDiv = document.getElementById('testApiStatusMsg');
-      const model = document.getElementById('modelSelectBox').value;
+      const modelSelect = document.getElementById('modelSelectBox');
+      let targetModel = modelSelect.value || 'gemini-2.5-flash';
+      const testBtn = document.getElementById('testApiBtn');
 
       if (!key) {
-        statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-amber-600';
-        statusDiv.innerText = 'Please enter an API key, or leave empty for auto built-in mode.';
+        statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 block text-left';
+        statusDiv.innerHTML = `
+          <div class="flex items-center gap-1.5 font-bold mb-1 text-amber-700">
+            <i data-lucide="info" class="w-4 h-4 text-amber-600"></i> No API Key Entered
+          </div>
+          <p class="text-[11px] leading-relaxed">
+            PixcraftAI works out-of-the-box in <strong>Fast Built-in Mode</strong> with zero configuration needed. 
+            If you have a Google Gemini key, paste it above to unlock direct multimodal vision.
+          </p>
+        `;
+        if (window.lucide) lucide.createIcons();
         statusDiv.classList.remove('hidden');
         return;
       }
 
-      statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-blue-600';
-      statusDiv.innerText = 'Connecting to Google Gemini API...';
+      // Show testing spinner
+      testBtn.disabled = true;
+      testBtn.classList.add('opacity-75', 'cursor-wait');
+      statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 block';
+      statusDiv.innerHTML = `
+        <div class="flex items-center justify-center gap-2 font-medium">
+          <svg class="animate-spin w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span>Verifying key & checking quota for ${targetModel}...</span>
+        </div>
+      `;
       statusDiv.classList.remove('hidden');
 
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+        // Step 1: Zero-quota key authentication check
+        try {
+          const authCheck = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+          if (!authCheck.ok) {
+            const authErr = await authCheck.json().catch(() => ({}));
+            const errMsg = authErr.error?.message || `HTTP ${authCheck.status}`;
+            if (authCheck.status === 400 || authCheck.status === 403 || errMsg.toLowerCase().includes('api key not valid')) {
+              statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 block text-left';
+              statusDiv.innerHTML = `
+                <div class="flex items-center gap-1.5 font-bold mb-1 text-rose-700">
+                  <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i> Invalid Google Gemini API Key
+                </div>
+                <p class="text-[11px] leading-relaxed mb-2">${errMsg}</p>
+                <div class="text-[11px] text-slate-600">
+                  Please verify your key at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 underline font-semibold">Google AI Studio</a>.
+                </div>
+              `;
+              if (window.lucide) lucide.createIcons();
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Models metadata ping skipped:", e);
+        }
+
+        // Step 2: Test generateContent on the selected model
+        const testPayload = {
+          contents: [{ parts: [{ text: "Ping. Respond with 'PONG'." }] }]
+        };
+
+        let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${key}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: "Ping. Respond with 'PONG'." }] }]
-          })
+          body: JSON.stringify(testPayload)
         });
 
         if (res.ok) {
-          statusDiv.className = 'text-xs font-bold mt-1.5 text-center text-emerald-600';
-          statusDiv.innerText = `✓ Connected successfully to ${model}!`;
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.error?.message || `HTTP ${res.status}`;
-          statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-rose-600';
-          statusDiv.innerText = `Connection failed: ${errMsg}`;
+          statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 block text-left';
+          statusDiv.innerHTML = `
+            <div class="flex items-center gap-1.5 font-bold mb-1 text-emerald-700">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> Connected Successfully!
+            </div>
+            <p class="text-[11px] leading-relaxed">
+              API key is valid and <strong>${targetModel}</strong> is active with full high-speed multimodal vision support.
+            </p>
+          `;
+          if (window.lucide) lucide.createIcons();
+          return;
         }
+
+        // Inspect non-OK error
+        const errData = await res.json().catch(() => ({}));
+        const errMsg = errData.error?.message || `HTTP ${res.status}`;
+        const isQuotaError = res.status === 429 || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('rate');
+
+        // Step 3: If quota exceeded on this model (e.g. gemini-3.8-flash with 20 limit), try high-quota Gemini 2.5 Flash!
+        if (isQuotaError && targetModel !== 'gemini-2.5-flash') {
+          statusDiv.innerHTML = `
+            <div class="flex items-center justify-center gap-2 font-medium text-amber-700">
+              <svg class="animate-spin w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>${targetModel} free quota reached. Testing Gemini 2.5 Flash (1,500 req/day)...</span>
+            </div>
+          `;
+
+          const fallbackRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(testPayload)
+          });
+
+          if (fallbackRes.ok) {
+            // Auto-switch to gemini-2.5-flash!
+            modelSelect.value = 'gemini-2.5-flash';
+            selectedModel = 'gemini-2.5-flash';
+            localStorage.setItem('pixcraft_selected_model', 'gemini-2.5-flash');
+
+            statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 block text-left';
+            statusDiv.innerHTML = `
+              <div class="flex items-center gap-1.5 font-bold mb-1 text-emerald-700">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> Connected: Switched to Gemini 2.5 Flash!
+              </div>
+              <p class="text-[11px] text-slate-700 leading-relaxed mb-1.5">
+                Your API key is <strong>100% Valid</strong>! Note: <code class="text-rose-600 font-semibold">${targetModel}</code> reached its 20-req preview limit. 
+                We automatically switched you to <strong>Gemini 2.5 Flash</strong> with <strong>1,500 free requests per day</strong>!
+              </p>
+              <div class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                ✓ Ready for high-volume metadata tagging
+              </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+            refreshApiStatusUI();
+            return;
+          }
+        }
+
+        // If quota is exhausted on all models or temporary rate limit
+        if (isQuotaError) {
+          statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 block text-left';
+          statusDiv.innerHTML = `
+            <div class="flex items-center gap-1.5 font-bold mb-1 text-amber-700">
+              <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i> API Key Valid — Google Free Quota Temporarily Reached
+            </div>
+            <p class="text-[11px] leading-relaxed text-slate-700 mb-2">
+              Your API key is authenticated, but Google's free tier rate limit was reached.
+              Google will reset your quota shortly.
+            </p>
+            <div class="p-2 bg-white rounded-lg border border-amber-200 text-[11px] text-amber-800">
+              💡 <strong>Zero downtime guarantee:</strong> You can save this key now! PixcraftAI will automatically use <strong>Fast Built-in Mode</strong> whenever Google's quota is cooling down, so your batch exports never fail.
+            </div>
+          `;
+          if (window.lucide) lucide.createIcons();
+          return;
+        }
+
+        // General API error
+        statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 block text-left';
+        statusDiv.innerHTML = `
+          <div class="flex items-center gap-1.5 font-bold mb-1 text-rose-700">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600"></i> Connection Issue
+          </div>
+          <p class="text-[11px] leading-relaxed mb-2">${errMsg}</p>
+          <p class="text-[11px] text-slate-600">
+            You can still generate metadata seamlessly using <strong>Fast Built-in Mode</strong>.
+          </p>
+        `;
+        if (window.lucide) lucide.createIcons();
+
       } catch (err) {
-        statusDiv.className = 'text-xs font-semibold mt-1.5 text-center text-rose-600';
-        statusDiv.innerText = `Network error: ${err.message}`;
+        statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 block text-left';
+        statusDiv.innerHTML = `
+          <div class="flex items-center gap-1.5 font-bold mb-1 text-rose-700">
+            <i data-lucide="wifi-off" class="w-4 h-4 text-rose-600"></i> Network Error
+          </div>
+          <p class="text-[11px] leading-relaxed mb-1">${err.message}</p>
+          <p class="text-[11px] text-slate-600">Please check your internet connection or proxy settings.</p>
+        `;
+        if (window.lucide) lucide.createIcons();
+      } finally {
+        testBtn.disabled = false;
+        testBtn.classList.remove('opacity-75', 'cursor-wait');
       }
     }
 
@@ -4313,47 +4590,60 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
       };
 
       const apiKey = userApiKey.trim();
-      const model = selectedModel || 'gemini-2.5-flash';
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const primaryModel = selectedModel || 'gemini-2.5-flash';
+      const candidateModels = [primaryModel, 'gemini-2.5-flash', 'gemini-2.0-flash'].filter((v, i, a) => a.indexOf(v) === i);
 
-      const maxRetries = 2;
-      let delay = 1000;
+      for (const model of candidateModels) {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const maxRetries = 2;
+        let delay = 1000;
 
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
 
-          if (!response.ok) {
-            if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-              throw new Error(`API client error ${response.status}`);
+            if (!response.ok) {
+              if (response.status === 429) {
+                console.warn(`Model ${model} hit rate limit / quota, attempting fallback candidate model...`);
+                break;
+              }
+              if (response.status >= 400 && response.status < 500) {
+                throw new Error(`API client error ${response.status}`);
+              }
+              throw new Error(`API status ${response.status}`);
             }
-            throw new Error(`API status ${response.status}`);
-          }
 
-          const resJson = await response.json();
-          const rawText = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!rawText) throw new Error('Empty response from model');
+            const resJson = await response.json();
+            const rawText = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!rawText) throw new Error('Empty response from model');
 
-          const parsed = JSON.parse(rawText);
-          if (parsed.title && Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
-            return {
-              title: cleanStockTitle(parsed.title),
-              description: cleanStockDescription(parsed.description || parsed.title),
-              keywords: cleanStockKeywords(parsed.keywords, 49),
-              category: parsed.category || 'Lifestyle'
-            };
+            const parsed = JSON.parse(rawText);
+            if (parsed.title && Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
+              if (model !== selectedModel) {
+                selectedModel = model;
+                localStorage.setItem('pixcraft_selected_model', model);
+                refreshApiStatusUI();
+              }
+              return {
+                title: cleanStockTitle(parsed.title),
+                description: cleanStockDescription(parsed.description || parsed.title),
+                keywords: cleanStockKeywords(parsed.keywords, 49),
+                category: parsed.category || 'Lifestyle'
+              };
+            }
+            throw new Error('Incomplete JSON data returned');
+          } catch (e) {
+            if (attempt === maxRetries || e.message.includes('API client error')) break;
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 2;
           }
-          throw new Error('Incomplete JSON data returned');
-        } catch (e) {
-          if (attempt === maxRetries || e.message.includes('API client error')) throw e;
-          await new Promise(r => setTimeout(r, delay));
-          delay *= 2;
         }
       }
+      throw new Error('All candidate models exhausted or rate-limited');
     }
 
     function generateSmartFallbackMetadata(filename, seedIndex = 0) {
@@ -5128,6 +5418,9 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
         </div>
       </div>
       <div class="flex items-center gap-1">
+        <button onclick="openApiModal()" title="Gemini API Key & Model Settings" class="text-amber-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <i data-lucide="key" class="w-3.5 h-3.5"></i>
+        </button>
         <button onclick="toggleVoiceInput('floatingChatInput')" title="Voice Conversation Mode (Speak in English or বাংলা)" class="text-blue-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
           <i data-lucide="mic" class="w-3.5 h-3.5"></i>
         </button>

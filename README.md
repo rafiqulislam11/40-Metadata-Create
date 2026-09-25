@@ -27,7 +27,7 @@ A professional, high-throughput microstock SEO metadata suite inspired by [PixCr
 
 ### 4. ⚡ 9 State-of-the-Art AI Models Supported
 - **ChatGPT**: OpenAI GPT-4o / GPT-5 natural language comprehension.
-- **Gemini**: Google Gemini 3.8 Flash (SOTA 2026 Vision & Multi-Modal Engine).
+- **Gemini**: Google Gemini 2.5 Flash (Recommended - 1,500 req/day High-Quota Vision Engine) & Gemini 2.0 / 3.8 Flash.
 - **Claude**: Anthropic Claude 3.7 Sonnet nuanced reasoning & spam elimination.
 - **Grok**: xAI Grok 3 real-time stock commercial intelligence.
 - **Perplexity**: Perplexity Sonar live web search & trending microstock tags.
@@ -40,7 +40,8 @@ A professional, high-throughput microstock SEO metadata suite inspired by [PixCr
 - **Live Gemini API & Dynamic Built-in Engine**: Connect your Google Gemini API key for live multimodal responses or enjoy the zero-config built-in intelligent engine with instant replies.
 - **5000 Free Pro Credits**: Default active balance for all Pro models.
 - **Fast Built-in Heuristic Mode**: Instant offline generation when no API key is provided, generating compliant titles, descriptions, and 48 ranked tags with zero lag.
-- **Built-in API Key Tester**: Direct "Test Connection" button in the settings modal.
+- **Built-in API Key Tester & Quota Fallback**: Direct "Test Connection & Verify Quota" button with zero-quota key validation and automatic fallback to Gemini 2.5 Flash if an experimental model hits rate limits.
+- **One-Click Header AI Engine Status**: Dedicated AI status pill directly in the top navigation bar and Metadata Generator workspace.
 
 ### 5. 🛠️ Complete PixcraftAI Creative Suite Tools
 1. **Metadata Generation Suite**: High-throughput microstock tagging and title generator with Top 10 keyword weighting and CSV exports.
