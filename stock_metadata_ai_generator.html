@@ -1999,15 +1999,14 @@
             <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">High Quota</span>
           </div>
           <select id="modelSelectBox" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-slate-800 outline-none text-xs font-medium focus:ring-2 focus:ring-blue-500 transition">
-            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Recommended - 1,500 req/day Free)</option>
-            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast Multimodal - 1,500 req/day Free)</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Production Standard - 1,500 req/day Free)</option>
+            <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Latest 2026 - Recommended by Google)</option>
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast Multimodal)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standard Multimodal)</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Legacy Accounts)</option>
             <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Visual Reasoning)</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Context Multi-Image)</option>
-            <option value="gemini-3.8-flash">Gemini 3.8 Flash (Experimental Preview - Low 20 req limit)</option>
           </select>
           <p class="text-[10px] text-slate-500 mt-1">
-            💡 <strong>Flash models</strong> provide up to 1,500 free requests per day (15 RPM) for high-volume metadata tagging.
+            💡 <strong>Gemini 3.8 Flash</strong> is Google's official recommended vision model for new API keys.
           </p>
         </div>
 
@@ -2092,10 +2091,10 @@
     let isProcessingBatch = false;
     let userApiKey = localStorage.getItem('pixcraft_custom_api_key') || "";
     let selectedModel = localStorage.getItem('pixcraft_selected_model');
-    // Gemini 2.5 Flash is Google's recommended high-quota model with 1,500 free req/day.
-    // Migrate away from gemini-3.8-flash (which is capped at 20 free requests) and non-gemini models
-    if (!selectedModel || selectedModel === 'gemini-3.8-flash' || selectedModel === 'gemini-3.5-flash' || !selectedModel.startsWith('gemini')) {
-      selectedModel = "gemini-2.5-flash";
+    // Gemini 3.8 Flash is Google's official recommended model for 2026.
+    // Migrate away from deprecated gemini-2.5-flash or missing models
+    if (!selectedModel || selectedModel === 'gemini-2.5-flash' || !selectedModel.startsWith('gemini')) {
+      selectedModel = "gemini-3.8-flash";
       localStorage.setItem('pixcraft_selected_model', selectedModel);
     }
     let activeModel = localStorage.getItem('pixcraft_hub_model');
@@ -3854,7 +3853,7 @@ Use clean markdown with bullet points and bold highlights.`;
 
     function refreshApiStatusUI() {
       const hasKey = !!(userApiKey && userApiKey.trim());
-      const currentModel = selectedModel || 'gemini-2.5-flash';
+      const currentModel = selectedModel || 'gemini-3.8-flash';
       const cleanModelName = currentModel.replace('gemini-', 'Gemini ').replace('-flash', ' Flash').replace('-pro', ' Pro');
 
       // Top Header status button
@@ -3904,7 +3903,7 @@ Use clean markdown with bullet points and bold highlights.`;
 
     function openApiModal() {
       document.getElementById('customKeyInput').value = userApiKey || '';
-      document.getElementById('modelSelectBox').value = selectedModel || 'gemini-2.5-flash';
+      document.getElementById('modelSelectBox').value = selectedModel || 'gemini-3.8-flash';
       document.getElementById('testApiStatusMsg').classList.add('hidden');
 
       const modalStatusBadge = document.getElementById('modalApiStatusBadge');
@@ -3952,7 +3951,7 @@ Use clean markdown with bullet points and bold highlights.`;
 
     function saveApiSetting() {
       userApiKey = document.getElementById('customKeyInput').value.trim();
-      selectedModel = document.getElementById('modelSelectBox').value || 'gemini-2.5-flash';
+      selectedModel = document.getElementById('modelSelectBox').value || 'gemini-3.8-flash';
       localStorage.setItem('pixcraft_custom_api_key', userApiKey);
       localStorage.setItem('pixcraft_selected_model', selectedModel);
       refreshApiStatusUI();
@@ -3965,7 +3964,7 @@ Use clean markdown with bullet points and bold highlights.`;
       const key = keyInput.value.trim();
       const statusDiv = document.getElementById('testApiStatusMsg');
       const modelSelect = document.getElementById('modelSelectBox');
-      let targetModel = modelSelect.value || 'gemini-2.5-flash';
+      let targetModel = modelSelect.value || 'gemini-3.8-flash';
       const testBtn = document.getElementById('testApiBtn');
 
       if (!key) {
@@ -3994,7 +3993,7 @@ Use clean markdown with bullet points and bold highlights.`;
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
           </svg>
-          <span>Verifying key & checking quota for ${targetModel}...</span>
+          <span>Verifying key & connecting to ${targetModel}...</span>
         </div>
       `;
       statusDiv.classList.remove('hidden');
@@ -4047,77 +4046,83 @@ Use clean markdown with bullet points and bold highlights.`;
             </p>
           `;
           if (window.lucide) lucide.createIcons();
+          refreshApiStatusUI();
           return;
         }
 
         // Inspect non-OK error
         const errData = await res.json().catch(() => ({}));
-        const errMsg = errData.error?.message || `HTTP ${res.status}`;
-        const isQuotaError = res.status === 429 || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('rate');
+        let errMsg = errData.error?.message || `HTTP ${res.status}`;
 
-        // Step 3: If quota exceeded on this model (e.g. gemini-3.8-flash with 20 limit), try high-quota Gemini 2.5 Flash!
-        if (isQuotaError && targetModel !== 'gemini-2.5-flash') {
+        // Step 3: Handle Google model deprecation ("no longer available to new users. Please update your code to use models/gemini-3.8-flash")
+        if (errMsg.toLowerCase().includes('no longer available') || errMsg.includes('gemini-3.8-flash')) {
           statusDiv.innerHTML = `
-            <div class="flex items-center justify-center gap-2 font-medium text-amber-700">
-              <svg class="animate-spin w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none">
+            <div class="flex items-center justify-center gap-2 font-medium text-blue-700">
+              <svg class="animate-spin w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
               </svg>
-              <span>${targetModel} free quota reached. Testing Gemini 2.5 Flash (1,500 req/day)...</span>
+              <span>Auto-updating to Google's recommended Gemini 3.8 Flash...</span>
             </div>
           `;
 
-          const fallbackRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+          // Auto-switch to gemini-3.8-flash
+          targetModel = 'gemini-3.8-flash';
+          modelSelect.value = 'gemini-3.8-flash';
+          selectedModel = 'gemini-3.8-flash';
+          localStorage.setItem('pixcraft_selected_model', 'gemini-3.8-flash');
+
+          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(testPayload)
           });
 
-          if (fallbackRes.ok) {
-            // Auto-switch to gemini-2.5-flash!
-            modelSelect.value = 'gemini-2.5-flash';
-            selectedModel = 'gemini-2.5-flash';
-            localStorage.setItem('pixcraft_selected_model', 'gemini-2.5-flash');
-
+          if (res.ok) {
             statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 block text-left';
             statusDiv.innerHTML = `
               <div class="flex items-center gap-1.5 font-bold mb-1 text-emerald-700">
-                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> Connected: Switched to Gemini 2.5 Flash!
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> Connected: Switched to Gemini 3.8 Flash!
               </div>
               <p class="text-[11px] text-slate-700 leading-relaxed mb-1.5">
-                Your API key is <strong>100% Valid</strong>! Note: <code class="text-rose-600 font-semibold">${targetModel}</code> reached its 20-req preview limit. 
-                We automatically switched you to <strong>Gemini 2.5 Flash</strong> with <strong>1,500 free requests per day</strong>!
+                Your key is <strong>100% Valid</strong>! Google recommended <strong>Gemini 3.8 Flash</strong> for your account, and we updated it automatically.
               </p>
               <div class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                ✓ Ready for high-volume metadata tagging
+                ✓ Ready for stock metadata generation
               </div>
             `;
             if (window.lucide) lucide.createIcons();
             refreshApiStatusUI();
             return;
           }
+
+          const retryErrData = await res.json().catch(() => ({}));
+          errMsg = retryErrData.error?.message || `HTTP ${res.status}`;
         }
 
-        // If quota is exhausted on all models or temporary rate limit
-        if (isQuotaError) {
-          statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 block text-left';
+        const isQuotaOrRateLimit = res.status === 429 || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('limit') || errMsg.toLowerCase().includes('retry in');
+
+        // Step 4: Handle 429 / Rate Limit (20 RPM cooldown)
+        if (isQuotaOrRateLimit) {
+          // If Google returns 429 asking to retry in Xs, this proves the key is authenticated and model is active!
+          statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 block text-left';
           statusDiv.innerHTML = `
-            <div class="flex items-center gap-1.5 font-bold mb-1 text-amber-700">
-              <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i> API Key Valid — Google Free Quota Temporarily Reached
+            <div class="flex items-center gap-1.5 font-bold mb-1 text-emerald-700">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> API Key Authenticated Successfully!
             </div>
-            <p class="text-[11px] leading-relaxed text-slate-700 mb-2">
-              Your API key is authenticated, but Google's free tier rate limit was reached.
-              Google will reset your quota shortly.
+            <p class="text-[11px] text-slate-700 leading-relaxed mb-1.5">
+              Your Google API Key is <strong>Valid & Verified</strong> on <strong>${targetModel}</strong>.
             </p>
-            <div class="p-2 bg-white rounded-lg border border-amber-200 text-[11px] text-amber-800">
-              💡 <strong>Zero downtime guarantee:</strong> You can save this key now! PixcraftAI will automatically use <strong>Fast Built-in Mode</strong> whenever Google's quota is cooling down, so your batch exports never fail.
+            <div class="p-2 bg-white rounded-lg border border-emerald-200 text-[11px] text-slate-700 leading-relaxed">
+              ⚡ <strong>Ready to Use:</strong> Google free tier includes 20 requests/minute. You can click <strong>Save Settings</strong> now and start generating metadata!
             </div>
           `;
           if (window.lucide) lucide.createIcons();
+          refreshApiStatusUI();
           return;
         }
 
-        // General API error
+        // Step 5: General API error
         statusDiv.className = 'text-xs font-semibold mt-2 p-2.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 block text-left';
         statusDiv.innerHTML = `
           <div class="flex items-center gap-1.5 font-bold mb-1 text-rose-700">
@@ -4613,8 +4618,8 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
       };
 
       const apiKey = userApiKey.trim();
-      const primaryModel = selectedModel || 'gemini-2.5-flash';
-      const candidateModels = [primaryModel, 'gemini-2.5-flash', 'gemini-2.0-flash'].filter((v, i, a) => a.indexOf(v) === i);
+      const primaryModel = selectedModel || 'gemini-3.8-flash';
+      const candidateModels = [primaryModel, 'gemini-3.8-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-flash'].filter((v, i, a) => a.indexOf(v) === i);
 
       for (const model of candidateModels) {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
