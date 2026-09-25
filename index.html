@@ -4418,6 +4418,12 @@ Use clean markdown with bullet points and bold highlights.`;
       // 11. Collapse multiple spaces
       t = t.replace(/\s+/g, ' ').trim();
 
+      // 12. Enforce minimum 5 words for Shutterstock & Adobe compliance (Shutterstock strictly rejects titles with < 5 words)
+      const words = t.split(/\s+/).filter(Boolean);
+      if (words.length > 0 && words.length < 5) {
+        t += " for commercial creative advertising and marketing concept";
+      }
+
       return t;
     }
 
@@ -4446,6 +4452,12 @@ Use clean markdown with bullet points and bold highlights.`;
       return d;
     }
 
+    const FORBIDDEN_STOCK_TAGS = new Set([
+      'isolated', 'isolated on white', 'stunning', 'beautiful', '4k', '8k',
+      'copyspace', 'copy space', 'nobody', 'wallpaper', 'royalty free', 'royalty-free',
+      'shutterstock', 'adobe stock', 'freepik', 'vecteezy', 'stock'
+    ]);
+
     function cleanStockKeywords(rawKeywords, maxCount = 49) {
       if (!Array.isArray(rawKeywords)) return [];
       const result = [];
@@ -4464,12 +4476,23 @@ Use clean markdown with bullet points and bold highlights.`;
                      .replace(/[^\w\s-]/g, '')
                      .trim();
           tag = tag.replace(/\s+/g, ' ');
-          if (tag.length >= 2 && !seen.has(tag) && result.length < maxCount) {
+          // Reject if single char, pure numbers (e.g. 2026), or forbidden spam tags that cause agency rejection
+          if (tag.length >= 2 && !/^\d+$/.test(tag) && !FORBIDDEN_STOCK_TAGS.has(tag) && !seen.has(tag) && result.length < maxCount) {
             seen.add(tag);
             result.push(tag);
           }
         });
       });
+
+      // Shutterstock strictly rejects files with fewer than 7 keywords. Ensure minimum 7 compliant keywords
+      const safeBackfills = ["commercial", "professional", "photography", "concept", "modern", "design", "background", "creative"];
+      for (const fill of safeBackfills) {
+        if (result.length >= 7) break;
+        if (!seen.has(fill) && result.length < maxCount) {
+          seen.add(fill);
+          result.push(fill);
+        }
+      }
       return result;
     }
 
@@ -5249,24 +5272,81 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
       }
     }
 
+    function getAdobeCategoryNumber(catName) {
+      const map = {
+        'Animals': 1,
+        'Buildings and Architecture': 2,
+        'Business': 3,
+        'Drinks': 4,
+        'The Environment': 5,
+        'States of Mind': 6,
+        'Food': 7,
+        'Graphic Resources': 8,
+        'Hobbies and Leisure': 9,
+        'Industry': 10,
+        'Landscape': 11,
+        'Landscapes': 11,
+        'Lifestyle': 12,
+        'People': 13,
+        'Plants and Flowers': 14,
+        'Culture and Religion': 15,
+        'Science': 16,
+        'Social Issues': 17,
+        'Sports': 18,
+        'Technology': 19,
+        'Transport': 20,
+        'Transportation': 20,
+        'Travel': 21
+      };
+      return map[catName] !== undefined ? map[catName] : 12;
+    }
+
+    function getShutterstockCategory(catName) {
+      const map = {
+        'Lifestyle': 'People',
+        'People': 'People',
+        'Business': 'Business/Finance',
+        'Technology': 'Technology',
+        'Food': 'Food and Drink',
+        'Drinks': 'Food and Drink',
+        'Animals': 'Animals/Wildlife',
+        'Buildings and Architecture': 'Buildings/Landmarks',
+        'Landscapes': 'Nature',
+        'Landscape': 'Nature',
+        'The Environment': 'Nature',
+        'Graphic Resources': 'Backgrounds/Textures',
+        'Hobbies and Leisure': 'Sports/Recreation',
+        'Industry': 'Industrial',
+        'Plants and Flowers': 'Nature',
+        'Science': 'Science',
+        'Social Issues': 'Miscellaneous',
+        'Sports': 'Sports/Recreation',
+        'Transport': 'Transportation',
+        'Transportation': 'Transportation',
+        'Travel': 'Parks/Outdoor'
+      };
+      return map[catName] || 'Miscellaneous';
+    }
+
     function downloadAdobeStockCsv() {
       if (batchItemList.length === 0) {
         showToast('Upload images first');
         return;
       }
 
+      // Adobe Stock CSV specification: Category must be an integer (1 to 21) or blank.
       let csv = "Filename,Title,Keywords,Category,Releases\r\n";
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const title = formatCsvCell(it.title, { isTitle: true });
         const kw = formatCsvKeywords(it.keywords, 49);
-        const cat = formatCsvCell(it.category || 'Lifestyle');
+        const catNum = getAdobeCategoryNumber(it.category);
         const rel = formatCsvCell(it.releases || '');
-        csv += `${fn},${title},${kw},${cat},${rel}\r\n`;
+        csv += `${fn},${title},${kw},${catNum},${rel}\r\n`;
       });
 
       downloadCsvFile(csv, `adobe_stock_metadata_${Date.now()}.csv`);
-      showToast('Official Adobe Stock CSV Downloaded (UTF-8 Protected)!');
+      showToast('Official Adobe Stock CSV Downloaded (1-21 Category ID Protected)!');
     }
 
     function downloadShutterstockCsv() {
@@ -5275,17 +5355,18 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
         return;
       }
 
+      // Shutterstock CSV specification: Description min 5 words, Categories must be official Shutterstock 26 categories.
       let csv = "Filename,Description,Keywords,Categories\r\n";
       batchItemList.forEach(it => {
         const fn = formatCsvCell(it.fileName);
         const desc = formatCsvCell(it.description || it.title, { isTitle: true });
         const kw = formatCsvKeywords(it.keywords, 50);
-        const cat = formatCsvCell(it.category || 'Lifestyle');
+        const cat = formatCsvCell(getShutterstockCategory(it.category));
         csv += `${fn},${desc},${kw},${cat}\r\n`;
       });
 
       downloadCsvFile(csv, `shutterstock_metadata_${Date.now()}.csv`);
-      showToast('Shutterstock CSV Downloaded (UTF-8 Protected)!');
+      showToast('Shutterstock CSV Downloaded (Official 26 Categories Protected)!');
     }
 
     function downloadFreepikCsv() {
@@ -5368,9 +5449,9 @@ Key requirements for ${activePlatform || 'Adobe Stock'}:
             const fn = formatCsvCell(it.fileName);
             const title = formatCsvCell(it.title, { isTitle: true });
             const kw = formatCsvKeywords(it.keywords, 49);
-            const cat = formatCsvCell(it.category || 'Lifestyle');
+            const catNum = getAdobeCategoryNumber(it.category);
             const rel = formatCsvCell(it.releases || '');
-            csv += `${fn},${title},${kw},${cat},${rel}\r\n`;
+            csv += `${fn},${title},${kw},${catNum},${rel}\r\n`;
           });
           zip.file("adobe_stock_batch_export.csv", csv);
         }
