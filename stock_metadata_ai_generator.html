@@ -35,10 +35,15 @@
   </script>
 
   <style>
-    body {
+    html, body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #ffffff;
       color: #18181b;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    button, input, select, textarea {
+      touch-action: manipulation;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 5px;
@@ -122,11 +127,11 @@
   <div id="pixcraftAppWrapper" class="min-h-screen flex flex-col justify-between transition-all duration-300">
 
   <!-- ================= TOP NAVIGATION BAR (Exact PixcraftAI Layout) ================= -->
-  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3 transition-colors">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-3 sm:px-8 py-2.5 sm:py-3 transition-colors">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
       
       <!-- Left: Sidebar Toggle Icon + PixcraftAI Logo -->
-      <div class="flex items-center gap-3.5">
+      <div class="flex items-center gap-2 sm:gap-3.5">
         <button onclick="toggleSidebar()" id="sidebarToggleBtn" class="text-slate-700 hover:text-slate-900 p-1.5 hover:bg-slate-100 rounded-lg transition" title="Toggle Sidebar">
           <!-- Exact Sidebar Split Box Icon [|] -->
           <svg class="w-5 h-5 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -135,47 +140,47 @@
           </svg>
         </button>
 
-        <a href="javascript:void(0)" onclick="switchView('hub')" class="flex items-center gap-2 cursor-pointer group">
-          <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" class="w-8 h-8 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform">
-          <span class="text-xl font-black tracking-tight text-slate-900">Pixcraft<span class="text-indigo-600">AI</span></span>
+        <a href="javascript:void(0)" onclick="switchView('hub')" class="flex items-center gap-1.5 sm:gap-2 cursor-pointer group">
+          <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform">
+          <span class="text-lg sm:text-xl font-black tracking-tight text-slate-900">Pixcraft<span class="text-indigo-600">AI</span></span>
         </a>
       </div>
 
       <!-- Right: Feedback, Gift, Credits, Upgrade, Grid Apps, User Avatar -->
-      <div class="flex items-center gap-2.5 sm:gap-4">
+      <div class="flex items-center gap-1.5 sm:gap-3">
         
         <!-- Feedback -->
-        <button onclick="openFeedbackModal()" class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition hidden sm:inline-block px-2 py-1 rounded-md">
+        <button onclick="openFeedbackModal()" class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition hidden md:inline-block px-2 py-1 rounded-md">
           Feedback
         </button>
 
         <!-- Gift Icon -->
-        <button onclick="openDailyGiftModal()" title="Daily Bonus Credits" class="text-slate-600 hover:text-slate-900 p-1.5 hover:bg-slate-100 rounded-full transition">
+        <button onclick="openDailyGiftModal()" title="Daily Bonus Credits" class="text-slate-600 hover:text-slate-900 p-1.5 hover:bg-slate-100 rounded-full transition hidden sm:inline-flex">
           <i data-lucide="gift" class="w-4 h-4"></i>
         </button>
 
         <!-- Credits Badge: 💎 5000 -->
-        <div onclick="openUpgradeModal()" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 cursor-pointer transition text-xs font-bold text-slate-700">
+        <div onclick="openUpgradeModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 cursor-pointer transition text-[11px] sm:text-xs font-bold text-slate-700">
           <i data-lucide="gem" class="w-3.5 h-3.5 text-blue-500"></i>
           <span id="creditBalanceText">5000</span>
         </div>
 
         <!-- Upgrade Button -->
-        <button onclick="openUpgradeModal()" class="px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs hover:shadow-sm">
+        <button onclick="openUpgradeModal()" class="hidden sm:inline-flex px-3.5 sm:px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs hover:shadow-sm">
           Upgrade
         </button>
 
         <!-- AI Engine / API Test Status Button -->
-        <button onclick="openApiModal()" id="headerApiStatusBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer" title="Gemini Vision Engine & API Key Settings">
+        <button onclick="openApiModal()" id="headerApiStatusBtn" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer" title="Gemini Vision Engine & API Key Settings">
           <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i>
           <span id="headerApiStatusText" class="hidden sm:inline">AI Engine</span>
           <span id="headerApiStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
         </button>
 
         <!-- Admin Access Control Button (Visible only to Admin) -->
-        <button onclick="openAdminPanel()" id="headerAdminBtn" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer animate-in fade-in" title="PixcraftAI Admin Access Control Center">
+        <button onclick="openAdminPanel()" id="headerAdminBtn" class="hidden items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white text-[11px] sm:text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer animate-in fade-in" title="PixcraftAI Admin Access Control Center">
           <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-200"></i>
-          <span class="hidden sm:inline">Admin Access</span>
+          <span class="hidden sm:inline">Admin</span>
           <span id="headerAdminPendingBadge" class="hidden px-1.5 py-0.2 bg-red-500 text-white text-[10px] font-black rounded-full shadow-sm animate-pulse">0</span>
         </button>
 

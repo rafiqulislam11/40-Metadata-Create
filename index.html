@@ -35,10 +35,15 @@
   </script>
 
   <style>
-    body {
+    html, body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #ffffff;
       color: #18181b;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    button, input, select, textarea {
+      touch-action: manipulation;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 5px;
@@ -122,11 +127,11 @@
   <div id="pixcraftAppWrapper" class="min-h-screen flex flex-col justify-between transition-all duration-300">
 
   <!-- ================= TOP NAVIGATION BAR (Exact PixcraftAI Layout) ================= -->
-  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3 transition-colors">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-3 sm:px-8 py-2.5 sm:py-3 transition-colors">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
       
       <!-- Left: Sidebar Toggle Icon + PixcraftAI Logo -->
-      <div class="flex items-center gap-3.5">
+      <div class="flex items-center gap-2 sm:gap-3.5">
         <button onclick="toggleSidebar()" id="sidebarToggleBtn" class="text-slate-700 hover:text-slate-900 p-1.5 hover:bg-slate-100 rounded-lg transition" title="Toggle Sidebar">
           <!-- Exact Sidebar Split Box Icon [|] -->
           <svg class="w-5 h-5 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -135,47 +140,47 @@
           </svg>
         </button>
 
-        <a href="javascript:void(0)" onclick="switchView('hub')" class="flex items-center gap-2 cursor-pointer group">
-          <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" class="w-8 h-8 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform">
-          <span class="text-xl font-black tracking-tight text-slate-900">Pixcraft<span class="text-indigo-600">AI</span></span>
+        <a href="javascript:void(0)" onclick="switchView('hub')" class="flex items-center gap-1.5 sm:gap-2 cursor-pointer group">
+          <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform">
+          <span class="text-lg sm:text-xl font-black tracking-tight text-slate-900">Pixcraft<span class="text-indigo-600">AI</span></span>
         </a>
       </div>
 
       <!-- Right: Feedback, Gift, Credits, Upgrade, Grid Apps, User Avatar -->
-      <div class="flex items-center gap-2.5 sm:gap-4">
+      <div class="flex items-center gap-1.5 sm:gap-3">
         
         <!-- Feedback -->
-        <button onclick="openFeedbackModal()" class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition hidden sm:inline-block px-2 py-1 rounded-md">
+        <button onclick="openFeedbackModal()" class="text-xs font-semibold text-slate-600 hover:text-slate-900 transition hidden md:inline-block px-2 py-1 rounded-md">
           Feedback
         </button>
 
         <!-- Gift Icon -->
-        <button onclick="openDailyGiftModal()" title="Daily Bonus Credits" class="text-slate-600 hover:text-slate-900 p-1.5 hover:bg-slate-100 rounded-full transition">
+        <button onclick="openDailyGiftModal()" title="Daily Bonus Credits" class="text-slate-600 hover:text-slate-900 p-1.5 hover:bg-slate-100 rounded-full transition hidden sm:inline-flex">
           <i data-lucide="gift" class="w-4 h-4"></i>
         </button>
 
         <!-- Credits Badge: 💎 5000 -->
-        <div onclick="openUpgradeModal()" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 cursor-pointer transition text-xs font-bold text-slate-700">
+        <div onclick="openUpgradeModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 cursor-pointer transition text-[11px] sm:text-xs font-bold text-slate-700">
           <i data-lucide="gem" class="w-3.5 h-3.5 text-blue-500"></i>
           <span id="creditBalanceText">5000</span>
         </div>
 
         <!-- Upgrade Button -->
-        <button onclick="openUpgradeModal()" class="px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs hover:shadow-sm">
+        <button onclick="openUpgradeModal()" class="hidden sm:inline-flex px-3.5 sm:px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs hover:shadow-sm">
           Upgrade
         </button>
 
         <!-- AI Engine / API Test Status Button -->
-        <button onclick="openApiModal()" id="headerApiStatusBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer" title="Gemini Vision Engine & API Key Settings">
+        <button onclick="openApiModal()" id="headerApiStatusBtn" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer" title="Gemini Vision Engine & API Key Settings">
           <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i>
           <span id="headerApiStatusText" class="hidden sm:inline">AI Engine</span>
           <span id="headerApiStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
         </button>
 
         <!-- Admin Access Control Button (Visible only to Admin) -->
-        <button onclick="openAdminPanel()" id="headerAdminBtn" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer animate-in fade-in" title="PixcraftAI Admin Access Control Center">
+        <button onclick="openAdminPanel()" id="headerAdminBtn" class="hidden items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white text-[11px] sm:text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer animate-in fade-in" title="PixcraftAI Admin Access Control Center">
           <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-200"></i>
-          <span class="hidden sm:inline">Admin Access</span>
+          <span class="hidden sm:inline">Admin</span>
           <span id="headerAdminPendingBadge" class="hidden px-1.5 py-0.2 bg-red-500 text-white text-[10px] font-black rounded-full shadow-sm animate-pulse">0</span>
         </button>
 
@@ -605,7 +610,7 @@
   <main id="metadataView" class="hidden max-w-6xl mx-auto px-4 py-6 w-full flex-1 space-y-6">
     
     <!-- Top Breadcrumb & Switcher -->
-    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200 gap-2.5">
       <div class="flex items-center gap-2 text-xs font-bold text-slate-600">
         <button onclick="switchView('hub')" class="hover:text-blue-600 flex items-center gap-1">
           <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Home
@@ -614,10 +619,10 @@
         <span class="text-blue-600">Metadata Generator Suite</span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <button onclick="openApiModal()" id="metaSuiteApiBtn" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 transition shadow-2xs cursor-pointer" title="Gemini AI Key & Test Settings">
           <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i>
-          <span id="metaSuiteApiLabel">API Test & Settings</span>
+          <span id="metaSuiteApiLabel">API Settings</span>
           <span id="metaSuiteApiDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
         </button>
         <button onclick="openBulkToolsModal()" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center gap-1.5 transition">
@@ -971,7 +976,7 @@
             </div>
 
             <!-- Add Tag Input Field -->
-            <div class="flex gap-2 mb-2.5">
+            <div class="flex flex-col sm:flex-row gap-2 mb-2.5">
               <input 
                 type="text" 
                 id="newTagInputField" 
@@ -979,12 +984,14 @@
                 class="flex-1 text-xs px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
                 onkeydown="if(event.key==='Enter'){event.preventDefault();addTagManually();}"
               >
-              <button onclick="addTagManually(true)" title="Add to beginning as high-ranking Top 10 keyword" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 flex items-center gap-1 transition">
-                <i data-lucide="arrow-up-to-line" class="w-3.5 h-3.5"></i> Add to Top 10
-              </button>
-              <button onclick="addTagManually(false)" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 transition shadow-xs">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Tag
-              </button>
+              <div class="flex items-center gap-2">
+                <button onclick="addTagManually(true)" title="Add to beginning as high-ranking Top 10 keyword" class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 flex items-center justify-center gap-1 transition">
+                  <i data-lucide="arrow-up-to-line" class="w-3.5 h-3.5"></i> Add to Top 10
+                </button>
+                <button onclick="addTagManually(false)" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-1 transition shadow-xs">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Tag
+                </button>
+              </div>
             </div>
 
             <!-- Keyword Tags Box -->
@@ -7267,19 +7274,19 @@ CRITICAL RULES:
     onclick="openFloatingChatModal()" 
     id="floatingChatBtn" 
     title="Open AI Chat Assistant"
-    class="fixed bottom-6 right-6 z-40 px-4 py-3 rounded-full bg-slate-900 hover:bg-black text-white shadow-2xl flex items-center gap-2.5 font-bold text-xs transition transform hover:scale-105 active:scale-95 group border border-slate-700/60"
+    class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 px-3 sm:px-4 py-2.5 sm:py-3 rounded-full bg-slate-900 hover:bg-black text-white shadow-2xl flex items-center gap-2 sm:gap-2.5 font-bold text-xs transition transform hover:scale-105 active:scale-95 group border border-slate-700/60"
   >
     <span class="relative flex h-2.5 w-2.5">
       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
       <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
     </span>
     <span id="floatingActiveModelIcon" class="flex items-center"></span>
-    <span id="floatingChatBtnLabel">AI Chat (<span id="floatingModelLabel">ChatGPT</span>)</span>
+    <span id="floatingChatBtnLabel" class="hidden sm:inline">AI Chat (<span id="floatingModelLabel">ChatGPT</span>)</span>
     <i data-lucide="message-square" class="w-4 h-4 text-blue-400"></i>
   </button>
 
   <!-- ================= FLOATING AI CHAT MODAL/DRAWER ================= -->
-  <div id="floatingChatModal" class="hidden fixed bottom-6 right-6 z-50 w-[92vw] sm:w-[420px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+  <div id="floatingChatModal" class="hidden fixed bottom-3 sm:bottom-6 right-3 sm:right-6 max-sm:left-3 z-50 w-auto sm:w-[420px] max-h-[86vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
     <!-- Header -->
     <div class="px-4 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
       <div class="flex items-center gap-2">
@@ -7436,21 +7443,21 @@ CRITICAL RULES:
   </div> <!-- /#pixcraftAppWrapper -->
 
   <!-- ================= PIXCRAFT AUTH GATEKEEPER MODAL ================= -->
-  <div id="authGatekeeperModal" class="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto">
-    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-6 sm:p-8 overflow-hidden my-auto text-slate-800 animate-in fade-in zoom-in-95 duration-200">
+  <div id="authGatekeeperModal" class="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-4 sm:p-8 overflow-hidden my-auto text-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[96vh] overflow-y-auto custom-scrollbar">
       
       <!-- Top Decorative Glow -->
       <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
       <!-- Brand Header -->
-      <div class="text-center relative z-10 mb-6">
-        <div class="w-20 h-20 rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/30 mb-3 mx-auto border-2 border-indigo-100">
+      <div class="text-center relative z-10 mb-4 sm:mb-6">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/30 mb-2.5 sm:mb-3 mx-auto border-2 border-indigo-100">
           <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" class="w-full h-full object-cover">
         </div>
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Pixcraft<span class="text-indigo-600">AI</span> Access Portal</h2>
-        <p class="text-xs text-slate-500 mt-1">Stock Contributor Metadata & AI Suite • Protected Workspace</p>
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold mt-2.5 border border-blue-200/60">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Pixcraft<span class="text-indigo-600">AI</span> Access Portal</h2>
+        <p class="text-xs text-slate-500 mt-0.5 sm:mt-1">Stock Contributor Metadata & AI Suite • Protected Workspace</p>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold mt-2 border border-blue-200/60">
           <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
           <span>Gmail & Password Authorization Required</span>
         </div>
@@ -7713,32 +7720,32 @@ CRITICAL RULES:
   </div>
 
   <!-- ================= ADMIN ACCESS CONTROL CENTER MODAL ================= -->
-  <div id="adminControlModal" class="hidden fixed inset-0 z-[99990] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-    <div class="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden my-auto flex flex-col max-h-[92vh] text-slate-800 animate-in fade-in zoom-in-95 duration-200">
+  <div id="adminControlModal" class="hidden fixed inset-0 z-[99990] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-2 sm:p-5 overflow-y-auto">
+    <div class="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden my-auto flex flex-col max-h-[94vh] text-slate-800 animate-in fade-in zoom-in-95 duration-200">
       
       <!-- Top Modal Header -->
-      <div class="px-5 sm:px-7 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex items-center justify-between border-b border-slate-700/60 shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="relative">
-            <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" class="w-11 h-11 rounded-xl object-cover shadow-md border border-white/20">
-            <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[10px] ring-2 ring-slate-900">👑</span>
+      <div class="px-4 sm:px-7 py-3 sm:py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex items-center justify-between border-b border-slate-700/60 shrink-0 gap-2">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div class="relative shrink-0">
+            <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover shadow-md border border-white/20">
+            <span class="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[8px] sm:text-[10px] ring-2 ring-slate-900">👑</span>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="font-extrabold text-base sm:text-lg tracking-tight text-white">Pixcraft<span class="text-indigo-400">AI</span> Access & User Control</h3>
-              <span class="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/30 uppercase tracking-wider">Master Admin</span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <h3 class="font-extrabold text-sm sm:text-lg tracking-tight text-white truncate">Pixcraft<span class="text-indigo-400">AI</span> Admin Center</h3>
+              <span class="px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[9px] sm:text-[10px] font-bold border border-amber-400/30 uppercase tracking-wider">Master</span>
             </div>
-            <p class="text-xs text-slate-300">Authorize contributors, approve requests, change passwords, and revoke access.</p>
+            <p class="text-[10px] sm:text-xs text-slate-300 truncate hidden sm:block">Authorize contributors, approve requests, change passwords, and revoke access.</p>
           </div>
         </div>
 
-        <button onclick="closeAdminPanel()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition">
+        <button onclick="closeAdminPanel()" class="text-slate-400 hover:text-white p-1.5 sm:p-2 rounded-xl hover:bg-white/10 transition shrink-0">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
       <!-- Top Summary Metrics Bar -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 sm:p-6 bg-slate-50/70 border-b border-slate-100 shrink-0">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-6 bg-slate-50/70 border-b border-slate-100 shrink-0">
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
             <i data-lucide="users" class="w-4 h-4"></i>
