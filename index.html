@@ -6068,7 +6068,12 @@ CRITICAL RULES:
     }
 
     function showAccessHelp() {
-      setAuthAlert('To obtain or reset access credentials, please contact the administrator (<strong>Rafiqul Islam</strong>) via email or submit a new access request.', 'warning');
+      setAuthAlert(
+        'To obtain or reset access credentials, contact the administrator:<br>' +
+        '<strong>Rafiqul Islam</strong> &nbsp;|&nbsp; 📞 <strong>01310-824987</strong><br>' +
+        '<span class="text-[10px]">Or submit a new access request from the <em>Create Account</em> tab.</span>',
+        'warning'
+      );
     }
 
     // Apply Authenticated User State to Header & App UI
@@ -6188,7 +6193,7 @@ CRITICAL RULES:
 
       // Check status
       if (user.status === 'revoked') {
-        setAuthAlert('<strong>Access Denied:</strong> Your account has been revoked or suspended by the administrator. Contact Rafiqul Islam for reactivation.');
+        setAuthAlert('<strong>Access Denied:</strong> Your account has been revoked or suspended by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;📞 <strong>01310-824987</strong>', 'error');
         return;
       }
 
@@ -6238,7 +6243,7 @@ CRITICAL RULES:
 
       // Check if registration is open
       if (!isOpenRegistrationEnabled()) {
-        setAuthAlert('<strong>Registration Closed:</strong> New account creation has been disabled by the administrator. Please contact Rafiqul Islam to get access.', 'error');
+        setAuthAlert('<strong>Registration Closed:</strong> New account creation has been disabled by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;📞 <strong>01310-824987</strong>', 'error');
         return;
       }
 
@@ -6291,7 +6296,7 @@ CRITICAL RULES:
           setAuthAlert('An account with this Gmail already exists! Please <button type="button" onclick="switchAuthTab(\'login\')" class="underline font-bold">Sign In</button>.', 'warning');
           return;
         } else if (existing.status === 'revoked') {
-          setAuthAlert('<strong>Access Denied:</strong> This Gmail has been blocked by the administrator. Contact Rafiqul Islam to restore access.', 'error');
+          setAuthAlert('<strong>Access Denied:</strong> This Gmail has been blocked by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;📞 <strong>01310-824987</strong>', 'error');
           return;
         } else if (existing.status === 'pending') {
           // Auto-activate their pending request if registration is open
@@ -7457,6 +7462,10 @@ CRITICAL RULES:
           <p class="text-[11px] text-slate-500">
             Forgot your password? 
             <button type="button" onclick="showAccessHelp()" class="text-blue-600 font-bold hover:underline">Contact Administrator</button>
+          </p>
+          <p class="text-[11px] text-slate-500 mt-1">
+            📞 <a href="tel:+8801310824987" class="text-slate-700 font-bold hover:underline">01310-824987</a>
+            &nbsp;|&nbsp; <span class="font-medium">Rafiqul Islam</span>
           </p>
         </div>
       </form>
