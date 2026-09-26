@@ -5837,21 +5837,21 @@ CRITICAL RULES:
       return result;
     }
 
-    // ── SECURITY NOTE ──────────────────────────────────────────────────────────
-    // Master Admin credentials are NOT stored here in plaintext.
-    // The password hash is computed at first-run and stored in localStorage only.
-    // To reset: Admin > Settings > Update Master Admin Credentials.
-    // ──────────────────────────────────────────────────────────────────────────
+    // ── MASTER ADMIN CONFIG ─────────────────────────────────────────────────────
+    // Change ADMIN_DB_VERSION whenever you update admin credentials.
+    // This forces all existing localStorage sessions to update automatically.
+    const ADMIN_DB_VERSION = 'v3'; // bump this to force credential refresh
+    const MASTER_ADMIN_EMAIL = 'freelancerrafiq55@gmail.com';
+    const MASTER_ADMIN_HASH  = pixcraftSha256('Rafiqul2ng@');
+    // ───────────────────────────────────────────────────────────────────────────
 
     // Default Seed Database (Used when no local storage exists)
-    // IMPORTANT: NO plaintext passwords here — only hashes are embedded.
-    const MASTER_ADMIN_HASH = pixcraftSha256('Admin@2026#Pix'); // hash only, safe in source
     function getDefaultUsersDatabase() {
       return [
         {
           id: 'usr_master_admin',
           name: 'Rafiqul Islam',
-          email: 'rafiqulislam11@gmail.com',
+          email: MASTER_ADMIN_EMAIL,
           passwordHash: MASTER_ADMIN_HASH,
           role: 'admin',
           status: 'active',
@@ -5862,6 +5862,24 @@ CRITICAL RULES:
       ];
     }
 
+    // Auto-migrate master admin credentials if ADMIN_DB_VERSION has changed
+    function migrateAdminCredentialsIfNeeded(usersList) {
+      const storedVersion = localStorage.getItem('pixcraft_admin_db_version');
+      if (storedVersion === ADMIN_DB_VERSION) return usersList; // no change needed
+
+      // Version mismatch → update master admin entry
+      const adminIdx = usersList.findIndex(u => u.role === 'admin' && u.id === 'usr_master_admin');
+      if (adminIdx !== -1) {
+        usersList[adminIdx].email        = MASTER_ADMIN_EMAIL;
+        usersList[adminIdx].passwordHash = MASTER_ADMIN_HASH;
+      } else {
+        // Master admin missing entirely — add fresh
+        usersList.unshift(getDefaultUsersDatabase()[0]);
+      }
+      localStorage.setItem('pixcraft_admin_db_version', ADMIN_DB_VERSION);
+      return usersList;
+    }
+
     // Database access helpers
 
     function getUsersDb() {
@@ -5870,14 +5888,19 @@ CRITICAL RULES:
         if (!raw) {
           const defaults = getDefaultUsersDatabase();
           localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(defaults));
+          localStorage.setItem('pixcraft_admin_db_version', ADMIN_DB_VERSION);
           return defaults;
         }
-        const parsed = JSON.parse(raw);
+        let parsed = JSON.parse(raw);
         if (!Array.isArray(parsed) || parsed.length === 0) {
           const defaults = getDefaultUsersDatabase();
           localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(defaults));
+          localStorage.setItem('pixcraft_admin_db_version', ADMIN_DB_VERSION);
           return defaults;
         }
+        // Auto-migrate if admin credentials changed
+        parsed = migrateAdminCredentialsIfNeeded(parsed);
+        localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(parsed));
         return parsed;
       } catch (err) {
         console.error('Failed to parse users DB, restoring defaults:', err);
@@ -5886,6 +5909,7 @@ CRITICAL RULES:
         return defaults;
       }
     }
+
 
     function saveUsersDb(usersList, triggerSync = true) {
       localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(usersList));
