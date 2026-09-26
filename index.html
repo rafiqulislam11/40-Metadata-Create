@@ -6094,7 +6094,11 @@ CRITICAL RULES:
     function showAccessHelp() {
       setAuthAlert(
         'To obtain or reset access credentials, contact the administrator:<br>' +
-        '<strong>Rafiqul Islam</strong> &nbsp;|&nbsp; 📞 <strong>01310-824987</strong><br>' +
+        '<strong>Rafiqul Islam</strong><br>' +
+        '<span style="display:inline-flex;align-items:center;gap:10px;margin-top:4px;">' +
+          '<a href="tel:+8801310824987" style="color:#1d4ed8;font-weight:700;">📞 01310-824987</a>' +
+          '<a href="https://wa.me/8801310824987" target="_blank" style="color:#16a34a;font-weight:700;">💬 WhatsApp</a>' +
+        '</span><br>' +
         '<span class="text-[10px]">Or submit a new access request from the <em>Create Account</em> tab.</span>',
         'warning'
       );
@@ -6217,7 +6221,7 @@ CRITICAL RULES:
 
       // Check status
       if (user.status === 'revoked') {
-        setAuthAlert('<strong>Access Denied:</strong> Your account has been revoked or suspended by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;📞 <strong>01310-824987</strong>', 'error');
+        setAuthAlert('<strong>Access Denied:</strong> Your account has been revoked or suspended by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;<a href="tel:+8801310824987" style="color:#1d4ed8;font-weight:700;">📞 01310-824987</a> &nbsp;<a href="https://wa.me/8801310824987" target="_blank" style="color:#16a34a;font-weight:700;">💬 WhatsApp</a>', 'error');
         return;
       }
 
@@ -6267,7 +6271,7 @@ CRITICAL RULES:
 
       // Check if registration is open
       if (!isOpenRegistrationEnabled()) {
-        setAuthAlert('<strong>Registration Closed:</strong> New account creation has been disabled by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;📞 <strong>01310-824987</strong>', 'error');
+        setAuthAlert('<strong>Registration Closed:</strong> New account creation has been disabled by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;<a href="tel:+8801310824987" style="color:#1d4ed8;font-weight:700;">📞 01310-824987</a> &nbsp;<a href="https://wa.me/8801310824987" target="_blank" style="color:#16a34a;font-weight:700;">💬 WhatsApp</a>', 'error');
         return;
       }
 
@@ -6320,7 +6324,7 @@ CRITICAL RULES:
           setAuthAlert('An account with this Gmail already exists! Please <button type="button" onclick="switchAuthTab(\'login\')" class="underline font-bold">Sign In</button>.', 'warning');
           return;
         } else if (existing.status === 'revoked') {
-          setAuthAlert('<strong>Access Denied:</strong> This Gmail has been blocked by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;📞 <strong>01310-824987</strong>', 'error');
+          setAuthAlert('<strong>Access Denied:</strong> This Gmail has been blocked by the administrator.<br>Contact: <strong>Rafiqul Islam</strong> &nbsp;<a href="tel:+8801310824987" style="color:#1d4ed8;font-weight:700;">📞 01310-824987</a> &nbsp;<a href="https://wa.me/8801310824987" target="_blank" style="color:#16a34a;font-weight:700;">💬 WhatsApp</a>', 'error');
           return;
         } else if (existing.status === 'pending') {
           // Auto-activate their pending request if registration is open
@@ -7487,10 +7491,15 @@ CRITICAL RULES:
             Forgot your password? 
             <button type="button" onclick="showAccessHelp()" class="text-blue-600 font-bold hover:underline">Contact Administrator</button>
           </p>
-          <p class="text-[11px] text-slate-500 mt-1">
-            📞 <a href="tel:+8801310824987" class="text-slate-700 font-bold hover:underline">01310-824987</a>
-            &nbsp;|&nbsp; <span class="font-medium">Rafiqul Islam</span>
-          </p>
+          <div class="flex items-center justify-center gap-3 mt-2">
+            <a href="tel:+8801310824987" class="flex items-center gap-1 text-[11px] text-slate-700 font-bold hover:text-blue-700 transition">
+              📞 01310-824987
+            </a>
+            <span class="text-slate-300">|</span>
+            <a href="https://wa.me/8801310824987" target="_blank" class="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 transition">
+              💬 WhatsApp
+            </a>
+          </div>
         </div>
       </form>
 
