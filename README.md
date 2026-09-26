@@ -84,14 +84,28 @@ A professional, high-throughput microstock SEO metadata suite inspired by [PixCr
 - **Auto-Silence & Send**: Speaks, detects silence pause, automatically sends query to model, and retrieves insights.
 - **SpeechSynthesis TTS (Text-to-Speech)**: The model speaks back aloud automatically! Includes **🔊 Read Aloud** and **⏹ Stop Speaking** buttons on every chat response bubble.
 
+### 11. 🔐 User Password & Admin Access Control System
+- **Mandatory Login Gatekeeper**: No user can access or view workspace contents without authorized Gmail & Password credentials.
+- **Master Admin Ownership**: Complete administrative authority held by the owner (**Rafiqul Islam**).
+  - **Default Master Admin**: `rafiqulislam11@gmail.com`
+  - **Default Password**: `Admin@2026#Pix`
+- **Contributor Request Access Workflow**: Visitors can submit an access request with their Name, Gmail, desired password, and portfolio note. Accounts remain in `Pending` state until approved by Admin.
+- **1-Click Admin Access Control**:
+  - **Revoke / Block Access**: Instantly suspends any user. If that user is currently active, they are kicked out within 3.5 seconds!
+  - **Permanent Delete User**: Completely removes user records from the system.
+  - **Change / Reset Password**: Admin can reset any user's password directly.
+  - **Direct User Creation**: Add authorized contributors and copy ready-to-send credentials for WhatsApp or Email.
+  - **Offline Cryptographic Passkeys**: Generates HMAC-signed passcodes for static GitHub Pages hosting.
+  - **Global Cloud Sync (Firebase)**: 1-click connection to sync accounts, approvals, and revocations in real-time across all devices.
+
 ---
 
 ## 🚀 Quick Start
 
 1. Double-click [index.html](file:///c:/Users/RAFIQULISLAM/Desktop/All%20Apps/10-%20APPS%20GENERATE/40-Metadata-Create/index.html) to open in your browser.
-2. (Optional) Click **AI Mode** in the header to enter your Google Gemini API key, or use the fast built-in engine.
-3. Drag & drop up to 500 images into the upload drop zone.
-4. Review, adjust keywords, and click **Export CSV** for your target marketplace!
+2. Sign in with your Gmail and password (or use the Master Admin auto-fill).
+3. Open **Admin Access** in the top header to manage users, approve access requests, or revoke contributors.
+4. Drag & drop images into the upload drop zone and generate high-ranking stock metadata!
 
 ---
 

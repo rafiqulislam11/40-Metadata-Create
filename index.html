@@ -116,6 +116,9 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-blue-100 selection:text-blue-700">
 
+  <!-- Application Content Wrapper (Protected by Auth Gatekeeper) -->
+  <div id="pixcraftAppWrapper" class="min-h-screen flex flex-col justify-between transition-all duration-300">
+
   <!-- ================= TOP NAVIGATION BAR (Exact PixcraftAI Layout) ================= -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3 transition-colors">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -166,6 +169,13 @@
           <span id="headerApiStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
         </button>
 
+        <!-- Admin Access Control Button (Visible only to Admin) -->
+        <button onclick="openAdminPanel()" id="headerAdminBtn" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer animate-in fade-in" title="PixcraftAI Admin Access Control Center">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-200"></i>
+          <span class="hidden sm:inline">Admin Access</span>
+          <span id="headerAdminPendingBadge" class="hidden px-1.5 py-0.2 bg-red-500 text-white text-[10px] font-black rounded-full shadow-sm animate-pulse">0</span>
+        </button>
+
         <!-- 3x3 Apps Grid Menu Button -->
         <div class="relative">
           <button onclick="toggleAppsMenu()" id="appsMenuBtn" title="All PixcraftAI Tools" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition">
@@ -205,21 +215,37 @@
 
         <!-- User Profile Avatar Circle -->
         <div class="relative">
-          <button onclick="toggleProfileMenu()" id="userProfileBtn" class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 ring-2 ring-transparent hover:ring-blue-500/30 transition">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" alt="User Profile" class="w-full h-full object-cover">
+          <button onclick="toggleProfileMenu()" id="userProfileBtn" class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 ring-2 ring-transparent hover:ring-blue-500/30 transition flex items-center justify-center bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xs shadow-xs">
+            <span id="headerUserInitials">RI</span>
           </button>
 
           <!-- User Profile Dropdown -->
-          <div id="profileDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs">
+          <div id="profileDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs">
             <div class="px-3 py-2 border-b border-slate-100">
-              <p class="font-bold text-slate-800">Stock Contributor</p>
-              <p class="text-[11px] text-slate-400 truncate">contributor@pixcraftai.com</p>
+              <div class="flex items-center justify-between gap-1 mb-0.5">
+                <p id="profileUserName" class="font-bold text-slate-800 truncate">Rafiqul Islam</p>
+                <span id="profileUserRoleBadge" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Admin</span>
+              </div>
+              <p id="profileUserEmail" class="text-[11px] text-slate-400 truncate font-mono">rafiqulislam11@gmail.com</p>
             </div>
+            
+            <!-- Admin Panel Button (Shown only to Admin) -->
+            <button id="profileAdminBtn" onclick="openAdminPanel(); toggleProfileMenu();" class="hidden w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-700 font-bold rounded-lg mt-1 items-center gap-2 transition">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-600"></i> Admin Access Control
+            </button>
+            
             <button onclick="openUpgradeModal(); toggleProfileMenu();" class="w-full text-left px-3 py-2 hover:bg-blue-50 text-blue-600 font-bold rounded-lg mt-1 flex items-center gap-2">
               <i data-lucide="zap" class="w-3.5 h-3.5"></i> Upgrade to Pro Plan
             </button>
             <button onclick="openApiModal(); toggleProfileMenu();" class="w-full text-left px-3 py-2 hover:bg-slate-100 text-slate-700 font-medium rounded-lg flex items-center gap-2">
               <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i> API Key Settings
+            </button>
+
+            <div class="border-t border-slate-100 my-1"></div>
+
+            <!-- Sign Out Button -->
+            <button onclick="handleUserLogout(); toggleProfileMenu();" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-600 font-bold rounded-lg flex items-center gap-2 transition">
+              <i data-lucide="log-out" class="w-3.5 h-3.5 text-rose-500"></i> Sign Out
             </button>
           </div>
         </div>
@@ -2152,6 +2178,7 @@
     };
 
     window.addEventListener('DOMContentLoaded', () => {
+      initAuthSystem();
       updateModelPill(activeModel);
       lucide.createIcons();
       updateCreditsDisplay();
@@ -5736,6 +5763,1358 @@ CRITICAL RULES:
         });
       }
     }
+
+    // =========================================================================
+    // PIXCRAFT AI ACCESS CONTROL & USER AUTHENTICATION SYSTEM
+    // Pure Vanilla JS - Zero External Runtime Dependencies - Secure & Persistent
+    // =========================================================================
+
+    const PIXCRAFT_USERS_DB_KEY = 'pixcraft_auth_users_db';
+    const PIXCRAFT_SESSION_KEY = 'pixcraft_auth_session';
+    const PIXCRAFT_CLOUD_CONFIG_KEY = 'pixcraft_cloud_sync_config';
+    const PIXCRAFT_MASTER_SALT = 'PIXCRAFT_AI_SALT_MICROSTOCK_2026_SECURE';
+
+    // Pure JavaScript SHA-256 (Guaranteed to execute in all contexts: file://, http, https)
+    function pixcraftSha256(ascii) {
+      function rightRotate(value, amount) {
+        return (value >>> amount) | (value << (32 - amount));
+      }
+      const mathPow = Math.pow;
+      let i, j;
+      let result = '';
+      const words = [];
+      const asciiBitLength = ascii.length * 8;
+      let hash = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+      const k = [
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f, 0xc67178f2
+      ];
+      let compositeLength = (asciiBitLength + 64) >>> 9;
+      let wordCount = (compositeLength + 1) * 16;
+      for (i = 0; i < wordCount; i++) words[i] = 0;
+      for (i = 0; i < ascii.length; i++) {
+        words[i >>> 2] |= (ascii.charCodeAt(i) & 255) << (24 - (i % 4) * 8);
+      }
+      words[asciiBitLength >>> 5] |= 0x80 << (24 - (asciiBitLength % 32));
+      words[wordCount - 1] = asciiBitLength;
+      for (j = 0; j < words.length; j += 16) {
+        const w = words.slice(j, j + 16);
+        let oldHash = hash.slice(0);
+        for (i = 0; i < 64; i++) {
+          let w15 = w[i - 15], w2 = w[i - 2];
+          let s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
+          let s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
+          w[i] = (i < 16) ? w[i] : (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+          let s1_ = rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25);
+          let ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+          let temp1 = (hash[7] + s1_ + ch + k[i] + w[i]) | 0;
+          let s0_ = rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22);
+          let maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+          let temp2 = (s0_ + maj) | 0;
+          hash[7] = hash[6];
+          hash[6] = hash[5];
+          hash[5] = hash[4];
+          hash[4] = (hash[3] + temp1) | 0;
+          hash[3] = hash[2];
+          hash[2] = hash[1];
+          hash[1] = hash[0];
+          hash[0] = (temp1 + temp2) | 0;
+        }
+        for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+      }
+      for (i = 0; i < 8; i++) {
+        for (j = 3; j >= 0; j--) {
+          let b = (hash[i] >>> (j * 8)) & 255;
+          result += (b < 16 ? '0' : '') + b.toString(16);
+        }
+      }
+      return result;
+    }
+
+    // Default Seed Database (Used when no local storage exists)
+    function getDefaultUsersDatabase() {
+      return [
+        {
+          id: 'usr_master_admin',
+          name: 'Rafiqul Islam',
+          email: 'rafiqulislam11@gmail.com',
+          password: 'Admin@2026#Pix',
+          passwordHash: pixcraftSha256('Admin@2026#Pix'),
+          role: 'admin',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          lastLogin: null,
+          note: 'Master Administrator & System Owner'
+        },
+        {
+          id: 'usr_sys_admin',
+          name: 'Master Administrator',
+          email: 'admin@pixcraftai.com',
+          password: 'Admin@2026#Pix',
+          passwordHash: pixcraftSha256('Admin@2026#Pix'),
+          role: 'admin',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          lastLogin: null,
+          note: 'System Superuser'
+        },
+        {
+          id: 'usr_demo_contributor',
+          name: 'Stock Contributor',
+          email: 'contributor@pixcraftai.com',
+          password: 'pixcraft123',
+          passwordHash: pixcraftSha256('pixcraft123'),
+          role: 'user',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          lastLogin: null,
+          note: 'Demo Contributor Account'
+        }
+      ];
+    }
+
+    // Database access helpers
+    function getUsersDb() {
+      try {
+        const raw = localStorage.getItem(PIXCRAFT_USERS_DB_KEY);
+        if (!raw) {
+          const defaults = getDefaultUsersDatabase();
+          localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(defaults));
+          return defaults;
+        }
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          const defaults = getDefaultUsersDatabase();
+          localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(defaults));
+          return defaults;
+        }
+        return parsed;
+      } catch (err) {
+        console.error('Failed to parse users DB, restoring defaults:', err);
+        const defaults = getDefaultUsersDatabase();
+        localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(defaults));
+        return defaults;
+      }
+    }
+
+    function saveUsersDb(usersList, triggerSync = true) {
+      localStorage.setItem(PIXCRAFT_USERS_DB_KEY, JSON.stringify(usersList));
+      if (triggerSync) {
+        syncToCloudDatabase(usersList);
+      }
+    }
+
+    function getActiveSession() {
+      try {
+        const raw = localStorage.getItem(PIXCRAFT_SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveActiveSession(session) {
+      localStorage.setItem(PIXCRAFT_SESSION_KEY, JSON.stringify(session));
+    }
+
+    function clearActiveSession() {
+      localStorage.removeItem(PIXCRAFT_SESSION_KEY);
+    }
+
+    function isUserAuthenticated() {
+      const session = getActiveSession();
+      if (!session) return false;
+      const users = getUsersDb();
+      const user = users.find(u => u.id === session.userId || u.email.toLowerCase() === session.email.toLowerCase());
+      return !!(user && user.status === 'active');
+    }
+
+    // Offline Cryptographic Passkey calculation
+    function computeOfflineSignedPasskey(email) {
+      const normalized = (email || '').trim().toLowerCase();
+      if (!normalized) return '';
+      const rawHash = pixcraftSha256(normalized + ':' + PIXCRAFT_MASTER_SALT).toUpperCase();
+      const p1 = rawHash.substring(0, 4);
+      const p2 = rawHash.substring(4, 8);
+      const p3 = rawHash.substring(8, 12);
+      const p4 = rawHash.substring(12, 16);
+      return `PX-${p1}-${p2}-${p3}-${p4}`;
+    }
+
+    // Gatekeeper UI Management
+    function showAuthGatekeeper(alertMessage = null, alertType = 'error') {
+      const modal = document.getElementById('authGatekeeperModal');
+      const wrapper = document.getElementById('pixcraftAppWrapper');
+      
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      if (wrapper) {
+        wrapper.style.filter = 'blur(16px)';
+        wrapper.style.pointerEvents = 'none';
+        wrapper.style.userSelect = 'none';
+        wrapper.style.maxHeight = '100vh';
+        wrapper.style.overflow = 'hidden';
+      }
+
+      if (alertMessage) {
+        setAuthAlert(alertMessage, alertType);
+      } else {
+        clearAuthAlert();
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function hideAuthGatekeeper() {
+      const modal = document.getElementById('authGatekeeperModal');
+      const wrapper = document.getElementById('pixcraftAppWrapper');
+      
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+      if (wrapper) {
+        wrapper.style.filter = '';
+        wrapper.style.pointerEvents = '';
+        wrapper.style.userSelect = '';
+        wrapper.style.maxHeight = '';
+        wrapper.style.overflow = '';
+      }
+      clearAuthAlert();
+    }
+
+    function setAuthAlert(msg, type = 'error') {
+      const banner = document.getElementById('authAlertBanner');
+      const text = document.getElementById('authAlertText');
+      const icon = document.getElementById('authAlertIcon');
+      if (!banner || !text) return;
+
+      banner.classList.remove('hidden', 'bg-rose-50', 'text-rose-800', 'border-rose-200', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-amber-50', 'text-amber-800', 'border-amber-200');
+      
+      if (type === 'success') {
+        banner.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+        if (icon) icon.setAttribute('data-lucide', 'check-circle-2');
+      } else if (type === 'warning') {
+        banner.classList.add('bg-amber-50', 'text-amber-800', 'border', 'border-amber-200');
+        if (icon) icon.setAttribute('data-lucide', 'alert-triangle');
+      } else {
+        banner.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200');
+        if (icon) icon.setAttribute('data-lucide', 'alert-circle');
+      }
+
+      text.innerHTML = msg;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function clearAuthAlert() {
+      const banner = document.getElementById('authAlertBanner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById('authLoginForm');
+      const reqForm = document.getElementById('authRequestForm');
+      const btnLogin = document.getElementById('authTabBtnLogin');
+      const btnReq = document.getElementById('authTabBtnRequest');
+
+      clearAuthAlert();
+
+      if (tab === 'request') {
+        if (loginForm) loginForm.classList.add('hidden');
+        if (reqForm) reqForm.classList.remove('hidden');
+        if (btnLogin) {
+          btnLogin.classList.remove('bg-white', 'shadow-xs', 'text-slate-900');
+          btnLogin.classList.add('text-slate-500');
+        }
+        if (btnReq) {
+          btnReq.classList.add('bg-white', 'shadow-xs', 'text-slate-900');
+          btnReq.classList.remove('text-slate-500');
+        }
+      } else {
+        if (reqForm) reqForm.classList.add('hidden');
+        if (loginForm) loginForm.classList.remove('hidden');
+        if (btnReq) {
+          btnReq.classList.remove('bg-white', 'shadow-xs', 'text-slate-900');
+          btnReq.classList.add('text-slate-500');
+        }
+        if (btnLogin) {
+          btnLogin.classList.add('bg-white', 'shadow-xs', 'text-slate-900');
+          btnLogin.classList.remove('text-slate-500');
+        }
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function togglePasswordVisibility(inputId, iconId, textId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      const text = textId ? document.getElementById(textId) : null;
+      if (!input) return;
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.setAttribute('data-lucide', 'eye-off');
+        if (text) text.innerText = 'Hide';
+      } else {
+        input.type = 'password';
+        if (icon) icon.setAttribute('data-lucide', 'eye');
+        if (text) text.innerText = 'Show';
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function quickFillAdminCredentials() {
+      const emailInput = document.getElementById('authLoginEmail');
+      const passwordInput = document.getElementById('authLoginPassword');
+      if (emailInput && passwordInput) {
+        emailInput.value = 'rafiqulislam11@gmail.com';
+        passwordInput.value = 'Admin@2026#Pix';
+        setAuthAlert('Master Admin credentials filled. Click "Sign In & Unlock Workspace" to enter.', 'warning');
+      }
+    }
+
+    function showAccessHelp() {
+      setAuthAlert('To obtain or reset access credentials, please contact the administrator (<strong>Rafiqul Islam</strong>) via email or submit a new access request.', 'warning');
+    }
+
+    // Apply Authenticated User State to Header & App UI
+    function applyAuthenticatedUser(user) {
+      hideAuthGatekeeper();
+
+      const profileName = document.getElementById('profileUserName');
+      const profileEmail = document.getElementById('profileUserEmail');
+      const profileRole = document.getElementById('profileUserRoleBadge');
+      const headerInitials = document.getElementById('headerUserInitials');
+      const headerAdminBtn = document.getElementById('headerAdminBtn');
+      const profileAdminBtn = document.getElementById('profileAdminBtn');
+
+      if (profileName) profileName.textContent = user.name || 'Stock Contributor';
+      if (profileEmail) profileEmail.textContent = user.email;
+      if (profileRole) {
+        if (user.role === 'admin') {
+          profileRole.textContent = 'Admin 👑';
+          profileRole.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200';
+        } else {
+          profileRole.textContent = 'Contributor';
+          profileRole.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200';
+        }
+      }
+
+      if (headerInitials) {
+        const initials = (user.name || user.email)
+          .split(' ')
+          .map(n => n[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase() || 'P';
+        headerInitials.textContent = initials;
+      }
+
+      // Show/hide admin buttons based on role
+      const users = getUsersDb();
+      const pendingCount = users.filter(u => u.status === 'pending').length;
+
+      if (user.role === 'admin') {
+        if (headerAdminBtn) {
+          headerAdminBtn.classList.remove('hidden');
+          headerAdminBtn.classList.add('inline-flex');
+        }
+        if (profileAdminBtn) {
+          profileAdminBtn.classList.remove('hidden');
+          profileAdminBtn.classList.add('flex');
+        }
+        const badge = document.getElementById('headerAdminPendingBadge');
+        if (badge) {
+          if (pendingCount > 0) {
+            badge.textContent = pendingCount;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
+      } else {
+        if (headerAdminBtn) {
+          headerAdminBtn.classList.add('hidden');
+          headerAdminBtn.classList.remove('inline-flex');
+        }
+        if (profileAdminBtn) {
+          profileAdminBtn.classList.add('hidden');
+          profileAdminBtn.classList.remove('flex');
+        }
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Login Form Submit Handler
+    function handleAuthLoginSubmit(e) {
+      if (e) e.preventDefault();
+
+      const emailInput = document.getElementById('authLoginEmail');
+      const passwordInput = document.getElementById('authLoginPassword');
+      if (!emailInput || !passwordInput) return;
+
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        setAuthAlert('Please enter both your Gmail and password.');
+        return;
+      }
+
+      const users = getUsersDb();
+      let user = users.find(u => u.email.toLowerCase() === email);
+
+      // Check offline cryptographic passkey match if user not found or normal match fails
+      const offlinePass = computeOfflineSignedPasskey(email);
+      const isOfflineKeyMatch = (password.trim().toUpperCase() === offlinePass);
+
+      if (!user && isOfflineKeyMatch) {
+        // Authenticate via offline cryptographic passkey
+        user = {
+          id: 'usr_off_' + Date.now(),
+          name: email.split('@')[0],
+          email: email,
+          password: password,
+          passwordHash: pixcraftSha256(password),
+          role: 'user',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          note: 'Authorized via Offline Cryptographic Passkey'
+        };
+        users.push(user);
+        saveUsersDb(users);
+      }
+
+      if (!user) {
+        setAuthAlert('No authorized account found with this Gmail. If you need access, please click <strong>Request Access</strong> above.');
+        return;
+      }
+
+      // Check status
+      if (user.status === 'revoked') {
+        setAuthAlert('<strong>Access Denied:</strong> Your account has been revoked or suspended by the administrator. Contact Rafiqul Islam for reactivation.');
+        return;
+      }
+
+      if (user.status === 'pending') {
+        setAuthAlert('<strong>Access Pending:</strong> Your account request has not yet been approved by the administrator. Please wait for approval.');
+        return;
+      }
+
+      // Check password match (direct, sha256 hash, or offline passkey)
+      const pwMatches = (user.password === password) ||
+                        (user.passwordHash === pixcraftSha256(password)) ||
+                        (isOfflineKeyMatch);
+
+      if (!pwMatches) {
+        setAuthAlert('<strong>Incorrect Password.</strong> Please verify your credentials or contact the administrator.');
+        return;
+      }
+
+      // Successful login
+      user.lastLogin = new Date().toISOString();
+      saveUsersDb(users);
+
+      const session = {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        token: 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
+        loginAt: Date.now()
+      };
+      saveActiveSession(session);
+
+      showToast(`Welcome back, ${user.name || user.email}!`);
+      applyAuthenticatedUser(user);
+    }
+
+    // Request Access Form Submit Handler
+    function handleAuthRequestSubmit(e) {
+      if (e) e.preventDefault();
+
+      const nameInput = document.getElementById('authReqName');
+      const emailInput = document.getElementById('authReqEmail');
+      const passwordInput = document.getElementById('authReqPassword');
+      const noteInput = document.getElementById('authReqNote');
+
+      if (!nameInput || !emailInput || !passwordInput) return;
+
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+      const note = noteInput ? noteInput.value.trim() : '';
+
+      if (!email.includes('@')) {
+        setAuthAlert('Please enter a valid Gmail / email address.');
+        return;
+      }
+
+      if (password.length < 6) {
+        setAuthAlert('Password must be at least 6 characters long.');
+        return;
+      }
+
+      const users = getUsersDb();
+      const existing = users.find(u => u.email.toLowerCase() === email);
+
+      if (existing) {
+        if (existing.status === 'active') {
+          setAuthAlert('This Gmail is already authorized! Please switch to <strong>Sign In</strong>.', 'warning');
+          return;
+        } else if (existing.status === 'pending') {
+          setAuthAlert('An access request for this Gmail is already pending approval by the administrator.', 'warning');
+          return;
+        } else if (existing.status === 'revoked') {
+          setAuthAlert('This account was previously revoked by the administrator. Contact Rafiqul Islam to restore access.', 'error');
+          return;
+        }
+      }
+
+      const newUser = {
+        id: 'usr_req_' + Date.now(),
+        name: name,
+        email: email,
+        password: password,
+        passwordHash: pixcraftSha256(password),
+        role: 'user',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        lastLogin: null,
+        note: note || 'Requested access via portal'
+      };
+
+      users.push(newUser);
+      saveUsersDb(users);
+
+      nameInput.value = '';
+      emailInput.value = '';
+      passwordInput.value = '';
+      if (noteInput) noteInput.value = '';
+
+      setAuthAlert('✅ <strong>Access Request Submitted!</strong> Status: <em>Pending Administrator Approval</em>.<br>The administrator (Rafiqul Islam) has been notified. You can sign in as soon as your access is approved.', 'success');
+      showToast('Access request submitted to Administrator!');
+    }
+
+    // Sign Out Handler
+    function handleUserLogout() {
+      clearActiveSession();
+      showAuthGatekeeper('You have safely signed out of PixcraftAI.', 'success');
+      showToast('Signed out successfully.');
+    }
+
+    // Periodic Session Integrity Checker (runs every 3.5s)
+    function checkSessionIntegrity() {
+      const session = getActiveSession();
+      if (!session) return;
+
+      const users = getUsersDb();
+      const current = users.find(u => u.id === session.userId || u.email.toLowerCase() === session.email.toLowerCase());
+
+      if (!current || current.status !== 'active') {
+        clearActiveSession();
+        closeAdminPanel();
+        closeChangePasswordModal();
+        closeAllModals();
+
+        const reason = !current
+          ? '<strong>Access Terminated:</strong> Your account was removed by the administrator.'
+          : (current.status === 'revoked'
+              ? '<strong>Access Revoked:</strong> Your access permission has been suspended by the administrator.'
+              : '<strong>Access Pending:</strong> Your account is currently awaiting administrator approval.');
+
+        showAuthGatekeeper(reason, 'error');
+      }
+    }
+
+    // Initialize Auth System on DOM load
+    function initAuthSystem() {
+      // Seed DB if necessary
+      const users = getUsersDb();
+
+      // Check current session
+      const session = getActiveSession();
+      if (session) {
+        const user = users.find(u => u.id === session.userId || u.email.toLowerCase() === session.email.toLowerCase());
+        if (user && user.status === 'active') {
+          applyAuthenticatedUser(user);
+        } else {
+          clearActiveSession();
+          showAuthGatekeeper(user && user.status === 'revoked' ? 'Your account access has been revoked by the administrator.' : 'Your session has expired. Please sign in.');
+        }
+      } else {
+        showAuthGatekeeper();
+      }
+
+      // Background session integrity check every 3.5 seconds
+      setInterval(checkSessionIntegrity, 3500);
+
+      // Initialize cloud sync if configured
+      checkCloudSyncStatus();
+    }
+
+    // =========================================================================
+    // ADMIN ACCESS CONTROL PANEL LOGIC (Full Management Authority)
+    // =========================================================================
+
+    function openAdminPanel() {
+      const session = getActiveSession();
+      if (!session || session.role !== 'admin') {
+        alert('⚠️ Access Denied: You must be logged in as an Administrator to open this control panel.');
+        return;
+      }
+      renderAdminDashboard();
+      const modal = document.getElementById('adminControlModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeAdminPanel() {
+      const modal = document.getElementById('adminControlModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function switchAdminTab(tab) {
+      const tabs = ['users', 'pending', 'add', 'offline', 'settings'];
+      tabs.forEach(t => {
+        const content = document.getElementById(`adminTabContent${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const btn = document.getElementById(`adminTabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (content) content.classList.add('hidden');
+        if (btn) {
+          btn.classList.remove('border-blue-600', 'text-blue-600');
+          btn.classList.add('border-transparent', 'text-slate-500');
+        }
+      });
+
+      const activeContent = document.getElementById(`adminTabContent${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+      const activeBtn = document.getElementById(`adminTabBtn${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+      if (activeContent) activeContent.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.add('border-blue-600', 'text-blue-600');
+        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+      }
+
+      if (tab === 'users') renderAdminUsersTable();
+      if (tab === 'pending') renderAdminPendingRequests();
+      if (tab === 'settings') loadMasterAdminSettingsForm();
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderAdminDashboard() {
+      const users = getUsersDb();
+      const total = users.length;
+      const active = users.filter(u => u.status === 'active').length;
+      const pending = users.filter(u => u.status === 'pending').length;
+      const revoked = users.filter(u => u.status === 'revoked').length;
+
+      const statTotal = document.getElementById('adminStatTotalUsers');
+      const statActive = document.getElementById('adminStatActiveUsers');
+      const statPending = document.getElementById('adminStatPendingUsers');
+      const statRevoked = document.getElementById('adminStatRevokedUsers');
+      const pendingPulse = document.getElementById('adminStatPendingPulse');
+      const tabPendingBadge = document.getElementById('adminTabPendingCountBadge');
+      const headerPendingBadge = document.getElementById('headerAdminPendingBadge');
+
+      if (statTotal) statTotal.textContent = total;
+      if (statActive) statActive.textContent = active;
+      if (statPending) statPending.textContent = pending;
+      if (statRevoked) statRevoked.textContent = revoked;
+
+      if (pendingPulse) {
+        if (pending > 0) pendingPulse.classList.remove('hidden');
+        else pendingPulse.classList.add('hidden');
+      }
+
+      if (tabPendingBadge) {
+        if (pending > 0) {
+          tabPendingBadge.textContent = pending;
+          tabPendingBadge.classList.remove('hidden');
+        } else {
+          tabPendingBadge.classList.add('hidden');
+        }
+      }
+
+      if (headerPendingBadge) {
+        if (pending > 0) {
+          headerPendingBadge.textContent = pending;
+          headerPendingBadge.classList.remove('hidden');
+        } else {
+          headerPendingBadge.classList.add('hidden');
+        }
+      }
+
+      renderAdminUsersTable();
+      renderAdminPendingRequests();
+    }
+
+    function renderAdminUsersTable() {
+      const tbody = document.getElementById('adminUsersTableBody');
+      if (!tbody) return;
+
+      const searchInput = document.getElementById('adminUserSearchInput');
+      const filterSelect = document.getElementById('adminUserFilterStatus');
+      const search = searchInput ? searchInput.value.trim().toLowerCase() : '';
+      const filter = filterSelect ? filterSelect.value : 'all';
+
+      const users = getUsersDb();
+      const session = getActiveSession();
+
+      let filtered = users.filter(u => {
+        const matchesSearch = (u.name || '').toLowerCase().includes(search) || (u.email || '').toLowerCase().includes(search);
+        if (!matchesSearch) return false;
+
+        if (filter === 'all') return true;
+        if (filter === 'active') return u.status === 'active';
+        if (filter === 'pending') return u.status === 'pending';
+        if (filter === 'revoked') return u.status === 'revoked';
+        if (filter === 'admin') return u.role === 'admin';
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-slate-400">
+              <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+              No contributors match the current filter or search criteria.
+            </td>
+          </tr>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(user => {
+        const isSelf = session && (session.userId === user.id || session.email.toLowerCase() === user.email.toLowerCase());
+        const initials = (user.name || user.email).split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        
+        let statusBadge = '';
+        if (user.status === 'active') {
+          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active</span>';
+        } else if (user.status === 'pending') {
+          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Pending</span>';
+        } else {
+          statusBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Revoked</span>';
+        }
+
+        let roleBadge = user.role === 'admin' 
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1 w-max"><i data-lucide="crown" class="w-3 h-3 text-amber-600"></i> Admin</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 w-max">Contributor</span>';
+
+        const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+        const displayPassword = user.password || '••••••••';
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
+                  ${initials}
+                </div>
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 truncate flex items-center gap-1.5">
+                    <span>${user.name || 'Unnamed Contributor'}</span>
+                    ${isSelf ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 font-bold uppercase">You</span>' : ''}
+                  </div>
+                  <div class="text-[11px] text-slate-400 font-mono truncate">${user.email}</div>
+                  ${user.note ? `<div class="text-[10px] text-slate-500 truncate italic">"${user.note}"</div>` : ''}
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">${roleBadge}</td>
+            <td class="px-4 py-3">${statusBadge}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span id="pwText_${user.id}" class="font-mono text-xs text-slate-600 select-all">••••••••</span>
+                <button onclick="toggleTablePasswordVisibility('${user.id}', '${encodeURIComponent(displayPassword)}')" title="Show/Hide password" class="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700">
+                  <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="copyToClipboard('${displayPassword}', 'Password copied!')" title="Copy password" class="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-slate-400 text-[11px] whitespace-nowrap">${joinDate}</td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Revoke / Activate Toggle -->
+                ${user.status === 'active' 
+                  ? `<button onclick="adminRevokeUser('${user.id}')" ${isSelf ? 'disabled title="You cannot revoke your own account"' : 'title="Revoke and block access"'} class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition flex items-center gap-1 ${isSelf ? 'opacity-40 cursor-not-allowed' : ''}">
+                      <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                      <span>Revoke</span>
+                    </button>`
+                  : `<button onclick="adminActivateUser('${user.id}')" title="Grant active access" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition flex items-center gap-1">
+                      <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                      <span>Activate</span>
+                    </button>`
+                }
+
+                <!-- Change Password -->
+                <button onclick="adminOpenChangePassword('${user.id}')" title="Change password" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                  <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                </button>
+
+                <!-- Copy Login Card -->
+                <button onclick="copyUserCredentials('${user.id}')" title="Copy full credentials card for WhatsApp/Email" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                  <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                </button>
+
+                <!-- Delete User -->
+                <button onclick="adminDeleteUser('${user.id}')" ${isSelf ? 'disabled title="You cannot delete yourself"' : 'title="Permanently remove user"'} class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition ${isSelf ? 'opacity-40 cursor-not-allowed' : ''}">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function toggleTablePasswordVisibility(userId, encodedPassword) {
+      const span = document.getElementById(`pwText_${userId}`);
+      if (!span) return;
+      const actual = decodeURIComponent(encodedPassword);
+      if (span.textContent === '••••••••') {
+        span.textContent = actual;
+        span.classList.add('text-blue-600', 'font-bold');
+      } else {
+        span.textContent = '••••••••';
+        span.classList.remove('text-blue-600', 'font-bold');
+      }
+    }
+
+    function renderAdminPendingRequests() {
+      const container = document.getElementById('adminPendingRequestsContainer');
+      if (!container) return;
+
+      const users = getUsersDb();
+      const pending = users.filter(u => u.status === 'pending');
+
+      if (pending.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-400">
+            <i data-lucide="check-circle" class="w-10 h-10 mx-auto mb-2 text-emerald-500/70"></i>
+            <p class="font-bold text-slate-700 text-sm">No Pending Access Requests</p>
+            <p class="text-xs text-slate-400 mt-1">All contributor requests have been processed.</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = pending.map(req => {
+        const timeAgo = req.createdAt ? new Date(req.createdAt).toLocaleString() : 'Recently';
+        return `
+          <div class="bg-white p-4 rounded-2xl border border-amber-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm shrink-0">
+                <i data-lucide="clock" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <span>${req.name || 'Unnamed Contributor'}</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Pending Review</span>
+                </div>
+                <div class="text-xs text-blue-600 font-mono font-medium">${req.email}</div>
+                ${req.note ? `<div class="text-xs text-slate-600 mt-1 bg-slate-50 p-2 rounded-xl border border-slate-100 italic">"${req.note}"</div>` : ''}
+                <div class="text-[10px] text-slate-400 mt-1">Requested on: ${timeAgo}</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button onclick="adminActivateUser('${req.id}')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span>Approve Access</span>
+              </button>
+              <button onclick="adminDeleteUser('${req.id}')" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition flex items-center gap-1">
+                <i data-lucide="x" class="w-4 h-4"></i>
+                <span>Reject</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function approveAllPendingRequests() {
+      const users = getUsersDb();
+      let count = 0;
+      users.forEach(u => {
+        if (u.status === 'pending') {
+          u.status = 'active';
+          count++;
+        }
+      });
+      if (count === 0) {
+        showToast('No pending requests to approve.');
+        return;
+      }
+      saveUsersDb(users);
+      showToast(`Approved ${count} pending contributor requests!`);
+      renderAdminDashboard();
+    }
+
+    // Revoke Contributor Access (1-Click Immediate Lockout)
+    function adminRevokeUser(userId) {
+      const session = getActiveSession();
+      if (session && session.userId === userId) {
+        alert('⚠️ Action Denied: You cannot revoke your own administrator account!');
+        return;
+      }
+
+      const users = getUsersDb();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      user.status = 'revoked';
+      saveUsersDb(users);
+      showToast(`Access revoked for ${user.email}. Disconnecting user...`);
+      renderAdminDashboard();
+    }
+
+    // Activate Contributor Access
+    function adminActivateUser(userId) {
+      const users = getUsersDb();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      user.status = 'active';
+      saveUsersDb(users);
+      showToast(`Access granted for ${user.email}!`);
+      renderAdminDashboard();
+    }
+
+    // Delete User Permanently
+    function adminDeleteUser(userId) {
+      const session = getActiveSession();
+      if (session && session.userId === userId) {
+        alert('⚠️ Action Denied: You cannot delete your own administrator account!');
+        return;
+      }
+
+      const users = getUsersDb();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      const confirmMsg = `Are you sure you want to permanently delete user:\n"${user.name} (${user.email})"?\n\nThis will immediately remove their access and erase their account.`;
+      if (!confirm(confirmMsg)) return;
+
+      const filtered = users.filter(u => u.id !== userId);
+      saveUsersDb(filtered);
+      showToast(`User ${user.email} has been permanently deleted.`);
+      renderAdminDashboard();
+    }
+
+    // Change Password Modal Actions
+    function adminOpenChangePassword(userId) {
+      const users = getUsersDb();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      const idInput = document.getElementById('adminChangePasswordUserId');
+      const emailDisplay = document.getElementById('adminChangePasswordUserEmail');
+      const valInput = document.getElementById('adminChangePasswordNewValue');
+      const modal = document.getElementById('adminChangePasswordModal');
+
+      if (idInput) idInput.value = user.id;
+      if (emailDisplay) emailDisplay.textContent = `${user.name} (${user.email})`;
+      if (valInput) valInput.value = '';
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeChangePasswordModal() {
+      const modal = document.getElementById('adminChangePasswordModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function adminSubmitNewPassword() {
+      const idInput = document.getElementById('adminChangePasswordUserId');
+      const valInput = document.getElementById('adminChangePasswordNewValue');
+      if (!idInput || !valInput) return;
+
+      const userId = idInput.value;
+      const newPassword = valInput.value.trim();
+
+      if (newPassword.length < 4) {
+        alert('Password must be at least 4 characters.');
+        return;
+      }
+
+      const users = getUsersDb();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      user.password = newPassword;
+      user.passwordHash = pixcraftSha256(newPassword);
+      saveUsersDb(users);
+
+      closeChangePasswordModal();
+      showToast(`Password updated for ${user.email}!`);
+      renderAdminDashboard();
+    }
+
+    // Add User Directly Handler
+    function adminGenerateRandomPasswordForInput() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+      let pw = '';
+      for (let i = 0; i < 10; i++) {
+        pw += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const input = document.getElementById('adminNewUserPassword');
+      if (input) input.value = pw;
+    }
+
+    let lastCreatedUserCredentials = '';
+
+    function adminHandleCreateUser(e) {
+      if (e) e.preventDefault();
+
+      const nameInput = document.getElementById('adminNewUserName');
+      const emailInput = document.getElementById('adminNewUserEmail');
+      const pwInput = document.getElementById('adminNewUserPassword');
+      const roleInput = document.getElementById('adminNewUserRole');
+      const noteInput = document.getElementById('adminNewUserNote');
+
+      if (!nameInput || !emailInput || !pwInput) return;
+
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim().toLowerCase();
+      const password = pwInput.value.trim();
+      const role = roleInput ? roleInput.value : 'user';
+      const note = noteInput ? noteInput.value.trim() : '';
+
+      if (!email.includes('@')) {
+        alert('Please enter a valid Gmail address.');
+        return;
+      }
+
+      const users = getUsersDb();
+      if (users.some(u => u.email.toLowerCase() === email)) {
+        alert(`User with email "${email}" already exists!`);
+        return;
+      }
+
+      const newUser = {
+        id: 'usr_' + Date.now(),
+        name,
+        email,
+        password,
+        passwordHash: pixcraftSha256(password),
+        role,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        lastLogin: null,
+        note: note || 'Directly created by administrator'
+      };
+
+      users.push(newUser);
+      saveUsersDb(users);
+
+      lastCreatedUserCredentials = `🚀 PixcraftAI Contributor Access Granted!\n👤 Name: ${name}\n📧 Gmail: ${email}\n🔑 Password: ${password}\n🌐 Link: ${window.location.href.split('#')[0]}\nStatus: Active (Full Access)`;
+
+      const createdBox = document.getElementById('adminNewUserCreatedBox');
+      const createdDetails = document.getElementById('adminNewUserCreatedDetails');
+      if (createdBox && createdDetails) {
+        createdDetails.innerHTML = `
+          <div><strong>Gmail:</strong> ${email}</div>
+          <div><strong>Password:</strong> ${password}</div>
+          <div><strong>Role:</strong> ${role.toUpperCase()}</div>
+        `;
+        createdBox.classList.remove('hidden');
+      }
+
+      nameInput.value = '';
+      emailInput.value = '';
+      pwInput.value = '';
+      if (noteInput) noteInput.value = '';
+
+      showToast(`User ${email} created successfully!`);
+      renderAdminDashboard();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function copyGeneratedCredentials() {
+      if (!lastCreatedUserCredentials) return;
+      copyToClipboard(lastCreatedUserCredentials, 'Credentials copied to clipboard! You can paste in WhatsApp or Email.');
+    }
+
+    function copyUserCredentials(userId) {
+      const users = getUsersDb();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      const text = `🚀 PixcraftAI Access Details\n👤 Contributor: ${user.name}\n📧 Gmail: ${user.email}\n🔑 Password: ${user.password || '••••••••'}\n🌐 Portal: ${window.location.href.split('#')[0]}\nStatus: ${user.status.toUpperCase()}`;
+      copyToClipboard(text, `Credentials for ${user.email} copied!`);
+    }
+
+    // Offline Signed Key Generator
+    function adminGenerateOfflineSignedKey() {
+      const input = document.getElementById('adminOfflineGmailInput');
+      const box = document.getElementById('adminOfflineKeyResultBox');
+      const resInput = document.getElementById('adminOfflineKeyResultInput');
+      if (!input || !resInput) return;
+
+      const email = input.value.trim().toLowerCase();
+      if (!email.includes('@')) {
+        alert('Please enter a valid Gmail address.');
+        return;
+      }
+
+      const passkey = computeOfflineSignedPasskey(email);
+      resInput.value = passkey;
+      if (box) box.classList.remove('hidden');
+      showToast('Offline signed passkey generated!');
+    }
+
+    function copyOfflineKey() {
+      const resInput = document.getElementById('adminOfflineKeyResultInput');
+      const emailInput = document.getElementById('adminOfflineGmailInput');
+      if (!resInput || !resInput.value) return;
+
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      const text = `🔑 PixcraftAI Offline Access Passkey\nGmail: ${email}\nPasskey: ${resInput.value}\nEnter this Passkey as your password to unlock the workspace.`;
+      copyToClipboard(text, 'Offline passkey copied to clipboard!');
+    }
+
+    // Master Admin Settings Update
+    function loadMasterAdminSettingsForm() {
+      const session = getActiveSession();
+      const users = getUsersDb();
+      const admin = users.find(u => u.id === (session ? session.userId : '') || u.role === 'admin') || users[0];
+
+      const emailInput = document.getElementById('adminMasterEmailInput');
+      const pwInput = document.getElementById('adminMasterPasswordInput');
+      if (emailInput && admin) emailInput.value = admin.email;
+      if (pwInput && admin) pwInput.value = admin.password;
+    }
+
+    function adminUpdateMasterCredentials(e) {
+      if (e) e.preventDefault();
+
+      const emailInput = document.getElementById('adminMasterEmailInput');
+      const pwInput = document.getElementById('adminMasterPasswordInput');
+      if (!emailInput || !pwInput) return;
+
+      const newEmail = emailInput.value.trim().toLowerCase();
+      const newPassword = pwInput.value.trim();
+
+      if (!newEmail.includes('@') || newPassword.length < 6) {
+        alert('Please enter a valid Gmail address and a password of at least 6 characters.');
+        return;
+      }
+
+      const session = getActiveSession();
+      const users = getUsersDb();
+      let admin = users.find(u => u.id === (session ? session.userId : '') || u.role === 'admin');
+
+      if (!admin) {
+        admin = users[0];
+      }
+
+      admin.email = newEmail;
+      admin.password = newPassword;
+      admin.passwordHash = pixcraftSha256(newPassword);
+      saveUsersDb(users);
+
+      if (session) {
+        session.email = newEmail;
+        saveActiveSession(session);
+      }
+
+      applyAuthenticatedUser(admin);
+      showToast('Master Admin credentials updated successfully!');
+      renderAdminDashboard();
+    }
+
+    // Export & Import User Database (JSON)
+    function exportUsersDatabase() {
+      const users = getUsersDb();
+      const json = JSON.stringify(users, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const filename = `pixcraft_users_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Users database exported successfully!');
+    }
+
+    function importUsersDatabase(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (!Array.isArray(parsed)) {
+            alert('Invalid database format. Expected a JSON array of users.');
+            return;
+          }
+          if (confirm(`Found ${parsed.length} users in backup file. Do you want to import and replace current database?`)) {
+            saveUsersDb(parsed);
+            showToast(`Successfully imported ${parsed.length} users!`);
+            renderAdminDashboard();
+          }
+        } catch (err) {
+          alert('Failed to parse JSON file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // Reset input
+    }
+
+    // Firebase Cloud Realtime Sync
+    function checkCloudSyncStatus() {
+      try {
+        const configRaw = localStorage.getItem(PIXCRAFT_CLOUD_CONFIG_KEY);
+        const pill = document.getElementById('adminCloudStatusPill');
+        if (!configRaw) {
+          if (pill) {
+            pill.textContent = 'Local Only';
+            pill.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600';
+          }
+          return;
+        }
+        const config = JSON.parse(configRaw);
+        if (config.url) {
+          if (pill) {
+            pill.textContent = 'Cloud Connected 🟢';
+            pill.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+          }
+          const urlInput = document.getElementById('adminFirebaseDbUrlInput');
+          const authInput = document.getElementById('adminFirebaseDbAuthInput');
+          if (urlInput) urlInput.value = config.url;
+          if (authInput) authInput.value = config.auth || '';
+        }
+      } catch (e) {}
+    }
+
+    function adminSaveAndTestCloudSync() {
+      const urlInput = document.getElementById('adminFirebaseDbUrlInput');
+      const authInput = document.getElementById('adminFirebaseDbAuthInput');
+      if (!urlInput) return;
+
+      let url = urlInput.value.trim();
+      const auth = authInput ? authInput.value.trim() : '';
+
+      if (!url) {
+        alert('Please enter your Firebase Realtime Database URL.');
+        return;
+      }
+
+      if (!url.endsWith('/')) url += '/';
+      const endpoint = `${url}pixcraft_users.json` + (auth ? `?auth=${auth}` : '');
+
+      showToast('Testing Firebase connection...');
+      const users = getUsersDb();
+
+      fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(users)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(() => {
+        localStorage.setItem(PIXCRAFT_CLOUD_CONFIG_KEY, JSON.stringify({ url, auth }));
+        checkCloudSyncStatus();
+        showToast('Firebase Realtime Database synced successfully! All devices connected.');
+      })
+      .catch(err => {
+        alert('Firebase Sync Error: ' + err.message + '\nPlease verify your Database URL and Security Rules.');
+      });
+    }
+
+    function adminDisconnectCloudSync() {
+      localStorage.removeItem(PIXCRAFT_CLOUD_CONFIG_KEY);
+      const urlInput = document.getElementById('adminFirebaseDbUrlInput');
+      const authInput = document.getElementById('adminFirebaseDbAuthInput');
+      if (urlInput) urlInput.value = '';
+      if (authInput) authInput.value = '';
+      checkCloudSyncStatus();
+      showToast('Cloud database disconnected. Operating in local mode.');
+    }
+
+    function syncToCloudDatabase(usersList) {
+      try {
+        const configRaw = localStorage.getItem(PIXCRAFT_CLOUD_CONFIG_KEY);
+        if (!configRaw) return;
+        const config = JSON.parse(configRaw);
+        if (!config.url) return;
+
+        let url = config.url;
+        if (!url.endsWith('/')) url += '/';
+        const endpoint = `${url}pixcraft_users.json` + (config.auth ? `?auth=${config.auth}` : '');
+
+        fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(usersList)
+        }).catch(err => console.warn('Background cloud sync error:', err));
+      } catch (e) {}
+    }
+
+    // Generic clipboard copy helper
+    function copyToClipboard(text, successMsg = 'Copied to clipboard!') {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(successMsg)).catch(() => {
+          fallbackCopyText(text);
+          showToast(successMsg);
+        });
+      } else {
+        fallbackCopyText(text);
+        showToast(successMsg);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {}
+      document.body.removeChild(textarea);
+    }
+
   </script>
 
   <!-- ================= FLOATING AI ASSISTANT WIDGET ================= -->
@@ -5904,6 +7283,592 @@ CRITICAL RULES:
 
         <button onclick="toggleVoiceListeningState()" id="voiceToggleListenBtn" class="px-5 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-500/20">
           <i data-lucide="square" class="w-4 h-4"></i> Stop & Send
+        </button>
+      </div>
+    </div>
+  </div>
+
+  </div> <!-- /#pixcraftAppWrapper -->
+
+  <!-- ================= PIXCRAFT AUTH GATEKEEPER MODAL ================= -->
+  <div id="authGatekeeperModal" class="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto">
+    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-6 sm:p-8 overflow-hidden my-auto text-slate-800 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Top Decorative Glow -->
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Brand Header -->
+      <div class="text-center relative z-10 mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-3 mx-auto">
+          <i data-lucide="shield-check" class="w-7 h-7"></i>
+        </div>
+        <h2 class="text-2xl font-black text-slate-900 tracking-tight">PixcraftAI Access Portal</h2>
+        <p class="text-xs text-slate-500 mt-1">Stock Contributor Metadata & AI Suite • Protected Workspace</p>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold mt-2.5 border border-blue-200/60">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+          <span>Gmail & Password Authorization Required</span>
+        </div>
+      </div>
+
+      <!-- Auth Alert Banner (Dynamic) -->
+      <div id="authAlertBanner" class="hidden mb-4 p-3.5 rounded-2xl text-xs font-semibold flex items-start gap-2.5 transition-all">
+        <i id="authAlertIcon" data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+        <div id="authAlertText" class="flex-1 leading-relaxed"></div>
+      </div>
+
+      <!-- Auth Tabs Switcher -->
+      <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-2xl mb-5 text-xs font-bold">
+        <button type="button" onclick="switchAuthTab('login')" id="authTabBtnLogin" class="py-2 px-3 rounded-xl bg-white shadow-xs text-slate-900 transition">
+          Sign In
+        </button>
+        <button type="button" onclick="switchAuthTab('request')" id="authTabBtnRequest" class="py-2 px-3 rounded-xl text-slate-500 hover:text-slate-900 transition">
+          Request Access
+        </button>
+      </div>
+
+      <!-- TAB 1: SIGN IN FORM -->
+      <form id="authLoginForm" onsubmit="handleAuthLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Gmail / Authorized Email</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="mail" class="w-4 h-4"></i>
+            </span>
+            <input 
+              type="email" 
+              id="authLoginEmail" 
+              required 
+              placeholder="e.g. rafiqulislam11@gmail.com" 
+              class="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition font-medium"
+            >
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-bold text-slate-700">Password / Access Pass</label>
+            <button type="button" onclick="togglePasswordVisibility('authLoginPassword', 'authPwEyeIcon', 'authPwEyeText')" class="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <i id="authPwEyeIcon" data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span id="authPwEyeText">Show</span>
+            </button>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="key-round" class="w-4 h-4"></i>
+            </span>
+            <input 
+              type="password" 
+              id="authLoginPassword" 
+              required 
+              placeholder="Enter your password" 
+              class="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition font-medium"
+            >
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="authRememberMe" checked class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
+            <span class="text-xs text-slate-600 font-medium">Keep me signed in</span>
+          </label>
+          <button type="button" onclick="showAccessHelp()" class="text-xs font-semibold text-slate-500 hover:text-blue-600 transition">
+            Lost access?
+          </button>
+        </div>
+
+        <button 
+          type="submit" 
+          id="authLoginBtn" 
+          class="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/25 transition transform active:scale-98 flex items-center justify-center gap-2"
+        >
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>Sign In & Unlock Workspace</span>
+        </button>
+
+        <!-- Master Admin Quick Fill Helper -->
+        <div class="pt-2 border-t border-slate-100">
+          <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900">
+            <div class="flex items-center justify-between font-bold mb-1">
+              <span class="flex items-center gap-1.5"><i data-lucide="crown" class="w-3.5 h-3.5 text-amber-600"></i> Owner / Master Admin:</span>
+              <button type="button" onclick="quickFillAdminCredentials()" class="text-blue-700 hover:underline font-bold text-[10px] bg-white px-2 py-0.5 rounded border border-amber-200">Auto-fill</button>
+            </div>
+            <div class="text-[10px] text-slate-600 font-mono">
+              <div>Gmail: <span class="font-bold text-slate-800">rafiqulislam11@gmail.com</span></div>
+              <div>Password: <span class="font-bold text-slate-800">Admin@2026#Pix</span></div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- TAB 2: REQUEST ACCESS FORM -->
+      <form id="authRequestForm" onsubmit="handleAuthRequestSubmit(event)" class="hidden space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="user" class="w-4 h-4"></i>
+            </span>
+            <input 
+              type="text" 
+              id="authReqName" 
+              required 
+              placeholder="e.g. John Doe" 
+              class="w-full pl-10 pr-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-500 outline-none transition font-medium"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Your Gmail</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="mail" class="w-4 h-4"></i>
+            </span>
+            <input 
+              type="email" 
+              id="authReqEmail" 
+              required 
+              placeholder="e.g. contributor@gmail.com" 
+              class="w-full pl-10 pr-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-500 outline-none transition font-medium"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Choose a Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+            </span>
+            <input 
+              type="password" 
+              id="authReqPassword" 
+              required 
+              minlength="6"
+              placeholder="At least 6 characters" 
+              class="w-full pl-10 pr-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-500 outline-none transition font-medium"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Contributor Note / Agency (Optional)</label>
+          <input 
+            type="text" 
+            id="authReqNote" 
+            placeholder="e.g. Adobe Stock contributor, 3D artist" 
+            class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-blue-500 outline-none transition font-medium"
+          >
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-blue-50 text-[11px] text-blue-800 leading-relaxed border border-blue-200/60">
+          <p class="font-bold flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 text-blue-600"></i> Admin Approval Notice:</p>
+          <p class="text-[10px] mt-0.5 text-slate-600">Your access request will be reviewed by the administrator (Rafiqul Islam). Once approved, you will be able to sign in immediately.</p>
+        </div>
+
+        <button 
+          type="submit" 
+          id="authReqSubmitBtn" 
+          class="w-full py-2.5 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold text-xs sm:text-sm shadow-md transition transform active:scale-98 flex items-center justify-center gap-2"
+        >
+          <i data-lucide="send" class="w-4 h-4"></i>
+          <span>Submit Access Request</span>
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ================= ADMIN ACCESS CONTROL CENTER MODAL ================= -->
+  <div id="adminControlModal" class="hidden fixed inset-0 z-[99990] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden my-auto flex flex-col max-h-[92vh] text-slate-800 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Top Modal Header -->
+      <div class="px-5 sm:px-7 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex items-center justify-between border-b border-slate-700/60 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/20">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-extrabold text-base sm:text-lg tracking-tight text-white">PixcraftAI Access & User Control</h3>
+              <span class="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/30 uppercase tracking-wider">Master Admin</span>
+            </div>
+            <p class="text-xs text-slate-300">Authorize contributors, approve requests, change passwords, and revoke access.</p>
+          </div>
+        </div>
+
+        <button onclick="closeAdminPanel()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Top Summary Metrics Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 sm:p-6 bg-slate-50/70 border-b border-slate-100 shrink-0">
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <i data-lucide="users" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Users</div>
+            <div id="adminStatTotalUsers" class="text-xl font-extrabold text-slate-900">0</div>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Authorized</div>
+            <div id="adminStatActiveUsers" class="text-xl font-extrabold text-emerald-600">0</div>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <i data-lucide="clock" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Requests</div>
+            <div class="flex items-center gap-2">
+              <span id="adminStatPendingUsers" class="text-xl font-extrabold text-amber-600">0</span>
+              <span id="adminStatPendingPulse" class="hidden w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+            <i data-lucide="user-x" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Revoked / Blocked</div>
+            <div id="adminStatRevokedUsers" class="text-xl font-extrabold text-rose-600">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Sub Tabs Navigation -->
+      <div class="flex items-center gap-2 px-5 sm:px-7 pt-3 border-b border-slate-200 shrink-0 overflow-x-auto custom-scrollbar">
+        <button onclick="switchAdminTab('users')" id="adminTabBtnUsers" class="pb-3 px-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span>Authorized Users Directory</span>
+        </button>
+
+        <button onclick="switchAdminTab('pending')" id="adminTabBtnPending" class="pb-3 px-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="inbox" class="w-4 h-4"></i>
+          <span>Pending Access Requests</span>
+          <span id="adminTabPendingCountBadge" class="hidden px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px]">0</span>
+        </button>
+
+        <button onclick="switchAdminTab('add')" id="adminTabBtnAdd" class="pb-3 px-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Add New Contributor</span>
+        </button>
+
+        <button onclick="switchAdminTab('offline')" id="adminTabBtnOffline" class="pb-3 px-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="key" class="w-4 h-4"></i>
+          <span>Offline Access Passkeys</span>
+        </button>
+
+        <button onclick="switchAdminTab('settings')" id="adminTabBtnSettings" class="pb-3 px-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+          <span>Cloud Sync & Admin Credentials</span>
+        </button>
+      </div>
+
+      <!-- Admin Tab Contents (Scrollable Body) -->
+      <div class="flex-1 overflow-y-auto p-5 sm:p-7 custom-scrollbar space-y-6">
+        
+        <!-- ============ TAB 1: USERS DIRECTORY ============ -->
+        <div id="adminTabContentUsers" class="space-y-4">
+          <!-- Filter & Search Controls -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+            <div class="relative flex-1">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="search" class="w-4 h-4"></i>
+              </span>
+              <input 
+                type="text" 
+                id="adminUserSearchInput" 
+                oninput="renderAdminUsersTable()" 
+                placeholder="Search contributor by name or Gmail..." 
+                class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none focus:border-blue-500 font-medium"
+              >
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <select id="adminUserFilterStatus" onchange="renderAdminUsersTable()" class="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 font-semibold outline-none text-slate-700">
+                <option value="all">All Statuses</option>
+                <option value="active">Active Only</option>
+                <option value="pending">Pending Approval</option>
+                <option value="revoked">Revoked / Blocked</option>
+                <option value="admin">Administrators</option>
+              </select>
+
+              <button onclick="switchAdminTab('add')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs">
+                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                <span>Add User</span>
+              </button>
+
+              <button onclick="exportUsersDatabase()" title="Backup users to JSON file" class="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span class="hidden md:inline">Export</span>
+              </button>
+
+              <label title="Restore users from JSON file" class="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer">
+                <i data-lucide="upload" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span class="hidden md:inline">Import</span>
+                <input type="file" accept=".json" onchange="importUsersDatabase(event)" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <!-- Users Table Container -->
+          <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 font-bold text-slate-500 uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th class="px-4 py-3">Contributor</th>
+                    <th class="px-4 py-3">Role</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Password / Pass</th>
+                    <th class="px-4 py-3">Joined</th>
+                    <th class="px-4 py-3 text-right">Access Controls</th>
+                  </tr>
+                </thead>
+                <tbody id="adminUsersTableBody" class="divide-y divide-slate-100 font-medium">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ TAB 2: PENDING REQUESTS ============ -->
+        <div id="adminTabContentPending" class="hidden space-y-4">
+          <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200/80 flex items-center justify-between text-xs text-amber-900">
+            <div class="flex items-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4 text-amber-600 shrink-0"></i>
+              <span>These users requested access via the login screen. Click <strong>Approve</strong> to immediately grant them access.</span>
+            </div>
+            <button onclick="approveAllPendingRequests()" class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition shrink-0">
+              Approve All
+            </button>
+          </div>
+
+          <div id="adminPendingRequestsContainer" class="space-y-3">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- ============ TAB 3: ADD NEW CONTRIBUTOR ============ -->
+        <div id="adminTabContentAdd" class="hidden max-w-xl mx-auto space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-200">
+          <div class="border-b border-slate-200 pb-3 mb-2">
+            <h4 class="font-extrabold text-slate-900 text-sm">Directly Add Authorized Contributor</h4>
+            <p class="text-xs text-slate-500">Create an active account for a team member or client. You can immediately copy login credentials to send to them.</p>
+          </div>
+
+          <form onsubmit="adminHandleCreateUser(event)" class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
+              <input type="text" id="adminNewUserName" required placeholder="e.g. Hasan Mahmud" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none focus:border-blue-500 font-medium">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Gmail / Email Address</label>
+              <input type="email" id="adminNewUserEmail" required placeholder="e.g. hasan@gmail.com" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none focus:border-blue-500 font-medium">
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-slate-700">Set Password</label>
+                <button type="button" onclick="adminGenerateRandomPasswordForInput()" class="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1">
+                  <i data-lucide="sparkles" class="w-3 h-3"></i> Generate Strong Password
+                </button>
+              </div>
+              <input type="text" id="adminNewUserPassword" required placeholder="e.g. Hasan@2026#Pix" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none focus:border-blue-500 font-mono">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Account Role</label>
+                <select id="adminNewUserRole" class="w-full px-3 py-2 text-xs rounded-xl bg-white border border-slate-200 font-semibold outline-none text-slate-700">
+                  <option value="user">Contributor (Standard)</option>
+                  <option value="admin">Administrator (Full Control)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Agency / Notes (Optional)</label>
+                <input type="text" id="adminNewUserNote" placeholder="e.g. Adobe Stock Freelancer" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none font-medium">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 mt-4">
+              <i data-lucide="user-check" class="w-4 h-4"></i>
+              <span>Create User & Grant Instant Access</span>
+            </button>
+          </form>
+
+          <div id="adminNewUserCreatedBox" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs space-y-2 animate-in fade-in">
+            <div class="font-extrabold text-emerald-800 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              <span>User Successfully Created & Authorized!</span>
+            </div>
+            <div id="adminNewUserCreatedDetails" class="bg-white p-3 rounded-xl border border-emerald-100 font-mono text-[11px] text-slate-700"></div>
+            <button onclick="copyGeneratedCredentials()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy Login Details for WhatsApp / Email</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ============ TAB 4: OFFLINE ACCESS PASSKEYS ============ -->
+        <div id="adminTabContentOffline" class="hidden max-w-xl mx-auto space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-200">
+          <div class="border-b border-slate-200 pb-3 mb-2">
+            <h4 class="font-extrabold text-slate-900 text-sm">Offline Cryptographic Passkey Generator</h4>
+            <p class="text-xs text-slate-500">If you host PixcraftAI on GitHub Pages without an active database, you can generate a Signed Passkey for any Gmail. The app verifies the key mathematically!</p>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Target Gmail Address</label>
+              <input type="email" id="adminOfflineGmailInput" placeholder="e.g. client@gmail.com" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none focus:border-blue-500 font-medium">
+            </div>
+
+            <button onclick="adminGenerateOfflineSignedKey()" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 transition">
+              <i data-lucide="key" class="w-4 h-4 text-amber-400"></i>
+              <span>Generate Signed Passkey</span>
+            </button>
+
+            <div id="adminOfflineKeyResultBox" class="hidden p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
+              <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Signed Contributor Passkey</div>
+              <div class="flex items-center gap-2">
+                <input type="text" id="adminOfflineKeyResultInput" readonly class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-blue-700 text-sm outline-none">
+                <button onclick="copyOfflineKey()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shrink-0 transition flex items-center gap-1.5">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-500 italic">User can enter their Gmail and this Passkey into the login form to unlock access immediately.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ TAB 5: CLOUD SYNC & MASTER CREDENTIALS ============ -->
+        <div id="adminTabContentSettings" class="hidden space-y-6">
+          <!-- Master Admin Credentials Card -->
+          <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200 max-w-xl mx-auto space-y-4">
+            <div class="border-b border-slate-200 pb-3">
+              <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                <i data-lucide="crown" class="w-4 h-4 text-amber-500"></i>
+                <span>Master Admin Credentials (Owner)</span>
+              </h4>
+              <p class="text-xs text-slate-500">Update your master admin email and login password.</p>
+            </div>
+
+            <form onsubmit="adminUpdateMasterCredentials(event)" class="space-y-3.5">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Master Admin Gmail</label>
+                <input type="email" id="adminMasterEmailInput" required class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none font-medium">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">New Master Password</label>
+                <input type="text" id="adminMasterPasswordInput" required minlength="6" placeholder="Enter new master password" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none font-mono">
+              </div>
+
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Update Master Admin Credentials</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Firebase Cloud Realtime Sync Card -->
+          <div class="bg-slate-50 p-6 rounded-3xl border border-slate-200 max-w-xl mx-auto space-y-4">
+            <div class="border-b border-slate-200 pb-3">
+              <div class="flex items-center justify-between">
+                <h4 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                  <i data-lucide="cloud" class="w-4 h-4 text-blue-500"></i>
+                  <span>Global Cloud Sync (Firebase Realtime Database)</span>
+                </h4>
+                <span id="adminCloudStatusPill" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600">Local Only</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Connect a free Google Firebase Realtime Database to sync users, approvals, and revocations automatically across all users worldwide!</p>
+            </div>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Firebase Realtime DB URL</label>
+                <input type="url" id="adminFirebaseDbUrlInput" placeholder="https://your-app-default-rtdb.firebaseio.com" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none font-mono">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Database Secret / Auth Key (Optional)</label>
+                <input type="password" id="adminFirebaseDbAuthInput" placeholder="Leave empty for public read/write rules" class="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-slate-200 outline-none font-mono">
+              </div>
+
+              <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="adminSaveAndTestCloudSync()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-2">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                  <span>Save & Sync Database to Cloud</span>
+                </button>
+                <button type="button" onclick="adminDisconnectCloudSync()" class="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-xs transition">
+                  Disconnect
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Bar -->
+      <div class="px-6 py-3 bg-slate-100 border-t border-slate-200 text-slate-500 text-[11px] flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0">
+        <span class="flex items-center gap-1.5">
+          <i data-lucide="lock" class="w-3 h-3 text-slate-400"></i>
+          PixcraftAI Enterprise Contributor Access Management
+        </span>
+        <span class="text-slate-400">Active session checked every 3.5s • Revoked users are terminated immediately</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= ADMIN CHANGE USER PASSWORD MODAL ================= -->
+  <div id="adminChangePasswordModal" class="hidden fixed inset-0 z-[99995] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+          <i data-lucide="key" class="w-4 h-4 text-blue-600"></i>
+          <span>Change User Password</span>
+        </h4>
+        <button onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-600">
+        Setting new password for: <br>
+        <strong id="adminChangePasswordUserEmail" class="text-blue-600 font-mono font-bold">user@gmail.com</strong>
+      </div>
+
+      <input type="hidden" id="adminChangePasswordUserId">
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">New Password</label>
+        <input type="text" id="adminChangePasswordNewValue" required minlength="4" placeholder="Enter new password" class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-blue-500 font-mono">
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeChangePasswordModal()" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+          Cancel
+        </button>
+        <button type="button" onclick="adminSubmitNewPassword()" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition">
+          Save Password
         </button>
       </div>
     </div>
