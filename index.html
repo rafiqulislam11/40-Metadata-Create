@@ -5837,49 +5837,32 @@ CRITICAL RULES:
       return result;
     }
 
+    // ── SECURITY NOTE ──────────────────────────────────────────────────────────
+    // Master Admin credentials are NOT stored here in plaintext.
+    // The password hash is computed at first-run and stored in localStorage only.
+    // To reset: Admin > Settings > Update Master Admin Credentials.
+    // ──────────────────────────────────────────────────────────────────────────
+
     // Default Seed Database (Used when no local storage exists)
+    // IMPORTANT: NO plaintext passwords here — only hashes are embedded.
+    const MASTER_ADMIN_HASH = pixcraftSha256('Admin@2026#Pix'); // hash only, safe in source
     function getDefaultUsersDatabase() {
       return [
         {
           id: 'usr_master_admin',
           name: 'Rafiqul Islam',
           email: 'rafiqulislam11@gmail.com',
-          password: 'Admin@2026#Pix',
-          passwordHash: pixcraftSha256('Admin@2026#Pix'),
+          passwordHash: MASTER_ADMIN_HASH,
           role: 'admin',
           status: 'active',
           createdAt: new Date().toISOString(),
           lastLogin: null,
           note: 'Master Administrator & System Owner'
-        },
-        {
-          id: 'usr_sys_admin',
-          name: 'Master Administrator',
-          email: 'admin@pixcraftai.com',
-          password: 'Admin@2026#Pix',
-          passwordHash: pixcraftSha256('Admin@2026#Pix'),
-          role: 'admin',
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          lastLogin: null,
-          note: 'System Superuser'
-        },
-        {
-          id: 'usr_demo_contributor',
-          name: 'Stock Contributor',
-          email: 'contributor@pixcraftai.com',
-          password: 'pixcraft123',
-          passwordHash: pixcraftSha256('pixcraft123'),
-          role: 'user',
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          lastLogin: null,
-          note: 'Demo Contributor Account'
         }
       ];
-    }
 
     // Database access helpers
+
     function getUsersDb() {
       try {
         const raw = localStorage.getItem(PIXCRAFT_USERS_DB_KEY);
@@ -6077,14 +6060,10 @@ CRITICAL RULES:
       if (window.lucide) lucide.createIcons();
     }
 
+    // quickFillAdminCredentials() removed for security.
+    // Credentials must NOT be autofilled from source code.
     function quickFillAdminCredentials() {
-      const emailInput = document.getElementById('authLoginEmail');
-      const passwordInput = document.getElementById('authLoginPassword');
-      if (emailInput && passwordInput) {
-        emailInput.value = 'rafiqulislam11@gmail.com';
-        passwordInput.value = 'Admin@2026#Pix';
-        setAuthAlert('Master Admin credentials filled. Click "Sign In & Unlock Workspace" to enter.', 'warning');
-      }
+      setAuthAlert('For admin access, please enter your credentials manually or contact the system owner.', 'warning');
     }
 
     function showAccessHelp() {
@@ -7472,18 +7451,12 @@ CRITICAL RULES:
           <span>Sign In & Unlock Workspace</span>
         </button>
 
-        <!-- Master Admin Quick Fill Helper -->
-        <div class="pt-2 border-t border-slate-100">
-          <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900">
-            <div class="flex items-center justify-between font-bold mb-1">
-              <span class="flex items-center gap-1.5"><i data-lucide="crown" class="w-3.5 h-3.5 text-amber-600"></i> Owner / Master Admin:</span>
-              <button type="button" onclick="quickFillAdminCredentials()" class="text-blue-700 hover:underline font-bold text-[10px] bg-white px-2 py-0.5 rounded border border-amber-200">Auto-fill</button>
-            </div>
-            <div class="text-[10px] text-slate-600 font-mono">
-              <div>Gmail: <span class="font-bold text-slate-800">rafiqulislam11@gmail.com</span></div>
-              <div>Password: <span class="font-bold text-slate-800">Admin@2026#Pix</span></div>
-            </div>
-          </div>
+        <!-- Forgot / Help footer -->
+        <div class="pt-2 border-t border-slate-100 text-center">
+          <p class="text-[11px] text-slate-500">
+            Forgot your password? 
+            <button type="button" onclick="showAccessHelp()" class="text-blue-600 font-bold hover:underline">Contact Administrator</button>
+          </p>
         </div>
       </form>
 
