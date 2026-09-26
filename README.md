@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="pixcraft_logo.jpg" alt="PixcraftAI Logo" width="120" style="border-radius: 24px;" />
+</p>
+
 # PixCraftAI – Stock Photo SEO Metadata & Keyword Generator
 
 A professional, high-throughput microstock SEO metadata suite inspired by [PixCraftAI](https://www.pixcraftai.com/), built for stock contributors submitting to **Adobe Stock**, **Shutterstock**, **Freepik**, **Vecteezy**, **Depositphotos**, **123RF**, **Dreamstime**, and **Alamy**.
